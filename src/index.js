@@ -5,13 +5,15 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 
 const initialData = [
-  {text: "Do xyz", completed: false},
-  {text: "Do abc", completed: true},
+  {text: "This is not completed 1", completed: false, id: 0},
+  {text: "This is not completed 2", completed: false, id: 1},
+  {text: "This is completed 1", completed: true, id:2},
+  {text: "This is completed 2", completed: true, id:3},
 ]
 
 ReactDOM.render(
   <React.StrictMode>
-    <App data={initialData} />
+    <App initialData={initialData} />
   </React.StrictMode>,
   document.getElementById('root')
 );

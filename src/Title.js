@@ -1,5 +1,5 @@
 function Title(props) {
-    return <div>To-Do List</div>;
+    return <div className="todo-text">To-Do List</div>;
 }
 
 export default Title;

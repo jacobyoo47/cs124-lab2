@@ -34,3 +34,45 @@
   display: flex;
   justify-content: space-evenly;
 }
+
+.todo-task {
+  display: flex;
+  justify-content: space-between;
+  background: white;
+  border-radius: 8px;
+  padding: 2px;
+  margin: 7px 3px 0 3px;
+  flex-grow: 1;
+  text-align: center;
+  color: black;
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
+}
+
+.todo-task-name {
+  font-family: Verdana, Arial, sans-serif;
+  font-size: 14px;
+  width: 270px;
+  margin: 0 auto 3px auto;
+  justify-self: center;
+  align-self: center;
+}
+
+.todo-task-checkbox {
+  margin: 15px auto 13px 10px;
+  width: 13px;
+  height: 13px;
+}
+
+.todo-edit-button {
+  color: #4994bf;
+  background: none;
+  border: none;
+  margin: 12px 0 12px auto;
+}
+
+.todo-delete-button {
+  color: #a6287a;
+  background: none;
+  border: none;
+  margin: 12px 2px 12px 0;
+}

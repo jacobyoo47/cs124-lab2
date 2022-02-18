@@ -8,22 +8,24 @@ function ListItem(props) {
     const [showModal, setShowModal] = useState(false);
 
     return (
-        <div>
-            <input type="checkbox" checked={props.completed} onChange={() => {
+        <div className="todo-task">
+            <input type="checkbox" className="todo-task-checkbox" checked={props.completed} onChange={() => {
                 props.onEditItem(props.id, props.text, !props.completed)
             }}/>
-            <span>{`Text: ${props.text}`}</span>
-            <span>{`Completed: ${props.completed}`}</span>
-            <Icon onClick={() => {
-                setShowModal(true);
-            }}>
-                <FaEdit/>
-            </Icon>
-            <Icon onClick={() => {
-                props.onDeleteItem(props.id);
-            }}>
-                <FaTrashAlt/>
-            </Icon>
+            <span className="todo-task-name">{`Text: ${props.text}`}</span>
+            {/* <span>{`Completed: ${props.completed}`}</span> */}
+            <div>
+                <Icon buttonStyling="todo-edit-button" onClick={() => {
+                    setShowModal(true);
+                }}>
+                    <FaEdit />
+                </Icon>
+                <Icon buttonStyling="todo-delete-button" onClick={() => {
+                    props.onDeleteItem(props.id);
+                }}>
+                    <FaTrashAlt />
+                </Icon>
+            </div>
             {showModal &&
                 <Modal
                     title="Edit List Item"

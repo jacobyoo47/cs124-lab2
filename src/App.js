@@ -94,7 +94,7 @@ function App(props) {
                     />
                 )}
             </List>
-            <Icon onClick={() => {
+            <Icon buttonStyling="todo-add-button" onClick={() => {
                 setShowModal(true);
             }}>
                 <FaPlusCircle/>

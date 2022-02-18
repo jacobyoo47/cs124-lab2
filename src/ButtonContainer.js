@@ -1,5 +1,5 @@
 function ButtonContainer(props) {
-    return <div>{props.children}</div>;
+    return <div className="todo-buttons-container">{props.children}</div>;
 }
 
 export default ButtonContainer;

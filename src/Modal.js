@@ -1,6 +1,5 @@
 import {useState} from "react";
-import {FaWindowClose} from 'react-icons/fa';
-import {FaSave} from 'react-icons/fa';
+import {FaRegWindowClose} from 'react-icons/fa';
 import './Modal.css'
 import Icon from "./Icon";
 
@@ -13,23 +12,26 @@ function Modal(props) {
             <div className="content">
                 <div className="header">
                     <h4 className="title">{props.title}</h4>
+                    <Icon buttonStyling="modal-close-button" onClick={() => {
+                        props.onClose();
+                    }}>
+                        <FaRegWindowClose/>
+                    </Icon>
                 </div>
                 <div className="body">
                     <p>Item Name</p>
-                    <input type="text" name="text" placeholder={props.textInputValue} onChange={(event) => {
+                    <input className="modal-input" type="text" name="text" placeholder={props.textInputValue} onChange={(event) => {
                         setText(event.target.value);
                     }}/>
                 </div>
                 <div className="footer">
-                    <Icon text="Close" onClick={() => {
-                        props.onClose();
-                    }}>
-                        <FaWindowClose/>
-                    </Icon>
-                    <Icon text="Save" onClick={() => {
+                    <Icon buttonStyling="modal-save-button" text="Add Item" onClick={() => {
                         props.onSave(text);
                     }}>
-                        <FaSave/>
+                    </Icon>
+                    <Icon buttonStyling="modal-cancel-button" text="Cancel" onClick={() => {
+                        props.onClose();
+                    }}>
                     </Icon>
                 </div>
             </div>

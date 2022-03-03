@@ -14,7 +14,7 @@ function ListItem(props) {
             }}/>
             <span className="todo-task-name">{`Text: ${props.text}`}</span>
             {/* <span>{`Completed: ${props.completed}`}</span> */}
-            <div>
+            <div className="todo-item-buttons-container">
                 <Icon buttonStyling="todo-edit-button" onClick={() => {
                     setShowModal(true);
                 }}>

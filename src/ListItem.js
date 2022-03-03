@@ -13,7 +13,6 @@ function ListItem(props) {
                 props.onEditItem(props.id, props.text, !props.completed)
             }}/>
             <span className="todo-task-name">{`${props.text}`}</span>
-            {/* <span>{`Completed: ${props.completed}`}</span> */}
             <div className="todo-item-buttons-container">
                 <Icon buttonStyling="todo-edit-button" onClick={() => {
                     setShowModal(true);

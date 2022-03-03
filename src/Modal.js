@@ -25,7 +25,7 @@ function Modal(props) {
                     }}/>
                 </div>
                 <div className="footer">
-                    <Icon buttonStyling="modal-save-button" text="Add Item" onClick={() => {
+                    <Icon buttonStyling="modal-save-button" text="Save Item" onClick={() => {
                         props.onSave(text);
                     }}>
                     </Icon>

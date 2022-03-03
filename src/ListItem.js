@@ -12,7 +12,7 @@ function ListItem(props) {
             <input type="checkbox" className="todo-task-checkbox" checked={props.completed} onChange={() => {
                 props.onEditItem(props.id, props.text, !props.completed)
             }}/>
-            <span className="todo-task-name">{`Text: ${props.text}`}</span>
+            <span className="todo-task-name">{`${props.text}`}</span>
             {/* <span>{`Completed: ${props.completed}`}</span> */}
             <div className="todo-item-buttons-container">
                 <Icon buttonStyling="todo-edit-button" onClick={() => {

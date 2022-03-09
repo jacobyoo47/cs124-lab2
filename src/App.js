@@ -68,10 +68,13 @@ function App(props) {
     const onEditItem = (id, text, completed) => {
         setData(data.map((item) => {
             if (item.id === id) {
-                item.text = text;
-                item.completed = completed;
+                const newItem = {...item};
+                newItem.text = text;
+                newItem.completed = completed;
+                return newItem;
+            } else {
+                return item;
             }
-            return item;
         }));
     }
 

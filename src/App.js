@@ -130,16 +130,7 @@ function App(props) {
         });
     }
 
-    // TODO: add loading spinner and error message
-    if (loading) {
-        return (
-            <h1>LOADING!!!</h1>
-        );
-    } else if (error) {
-        return (
-            <h1>ERROR!!!</h1>
-        )
-    }
+    // TODO: add loading spinner and error message below
     return (
         <div className="App">
             <Title/>
@@ -148,30 +139,36 @@ function App(props) {
                 <Button text={`Sort: ${sortField} ${sortOrder}`} onClick={onToggleSort}/>
                 <Button text="Remove Completed" onClick={onRemoveCompleted}/>
             </ButtonContainer>
-            <List>
-                {data.filter((item) => shouldShow(item)).map((item2) =>
-                    <ListItem
-                        key={item2.id}
-                        id={item2.id}
-                        text={item2.text}
-                        completed={item2.completed}
-                        priority={item2.priority}
-                        onDeleteItem={onDeleteItem}
-                        onEditItem={onEditItem}
-                    />
-                )}
-            </List>
-            <Icon buttonStyling="todo-add-button" onClick={() => {
-                setShowModal(true);
-            }}>
-                <FaPlusCircle/>
-            </Icon>
-            {showModal && <Modal title="Add New List Item" textInputValue={"New Item Name"} priorityInputValue={0} onClose={() => {
-                setShowModal(false);
-            }} onSave={(text, priority) => {
-                onAddItem(text, priority);
-                setShowModal(false);
-            }}/>}
+            {!loading && !error &&
+                <>
+                    <List>
+                        {data.filter((item) => shouldShow(item)).map((item2) =>
+                            <ListItem
+                                key={item2.id}
+                                id={item2.id}
+                                text={item2.text}
+                                completed={item2.completed}
+                                priority={item2.priority}
+                                onDeleteItem={onDeleteItem}
+                                onEditItem={onEditItem}
+                            />
+                        )}
+                    </List>
+                    <Icon buttonStyling="todo-add-button" onClick={() => {
+                        setShowModal(true);
+                    }}>
+                        <FaPlusCircle/>
+                    </Icon>
+                    {showModal && <Modal title="Add New List Item" textInputValue={"New Item Name"} priorityInputValue={0} onClose={() => {
+                        setShowModal(false);
+                    }} onSave={(text, priority) => {
+                        onAddItem(text, priority);
+                        setShowModal(false);
+                    }}/>}
+                </>
+            }
+            {loading && <h1>LOADING!!!</h1>}
+            {error && <h1>ERROR!!!</h1>}
         </div>
     );
 }

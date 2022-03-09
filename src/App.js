@@ -167,7 +167,7 @@ function App(props) {
                     }}/>}
                 </>
             }
-            {loading && <h1>LOADING!!!</h1>}
+            {loading && <div className="loading-spinner"></div>}
             {error && <h1>ERROR!!!</h1>}
         </div>
     );

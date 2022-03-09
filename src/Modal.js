@@ -6,6 +6,7 @@ import Icon from "./Icon";
 
 function Modal(props) {
     const [text, setText] = useState(props.textInputValue);
+    const [priority, setPriority] = useState(props.priorityInputValue);
 
     return (
         <div className="modal">
@@ -23,10 +24,18 @@ function Modal(props) {
                     <input className="modal-input" type="text" name="text" placeholder={props.textInputValue} onChange={(event) => {
                         setText(event.target.value);
                     }}/>
+                    <p>Priority</p>
+                    <select className="modal-input" name="priority" value={props.priorityInputValue} onChange={(event) => {
+                        setPriority(parseInt(event.target.value));
+                    }}>
+                        <option value="0">0</option>
+                        <option value="1">1</option>
+                        <option value="2">2</option>
+                    </select>
                 </div>
                 <div className="footer">
                     <Icon buttonStyling="modal-save-button" text="Save Item" onClick={() => {
-                        props.onSave(text);
+                        props.onSave(text, priority);
                     }}>
                     </Icon>
                     <Icon buttonStyling="modal-cancel-button" text="Cancel" onClick={() => {

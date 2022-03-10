@@ -4,6 +4,7 @@ import './App.css';
 import Title from './Title';
 import ButtonContainer from './ButtonContainer';
 import Button from './Button';
+import Dropdown from './Dropdown';
 import List from './List';
 import ListItem from './ListItem';
 import Icon from './Icon';
@@ -37,12 +38,17 @@ const ShowState = {
     Completed: 'Completed',
     Uncompleted: 'Uncompleted',
 }
+const ShowArr = [
+    'All',
+    'Completed',
+    'Uncompleted',
+]
 // Provide next show state given current show state
-const NextShowState = {
-    All: 'Completed',
-    Completed: 'Uncompleted',
-    Uncompleted: 'All',
-}
+// const NextShowState = {
+//     All: 'Completed',
+//     Completed: 'Uncompleted',
+//     Uncompleted: 'All',
+// }
 
 // Enum for sort condition
 // First element is field, second element is ascending/descending
@@ -52,13 +58,19 @@ const SortBy = {
     Priority_ASC: "Priority_ASC",
     Priority_DESC: "Priority_DESC",
 }
+const SortByArr = [
+    "Created_ASC",
+    "Created_DESC",
+    "Priority_ASC",
+    "Priority_DESC",
+]
 // Provide next filter state given current filter state
-const NextSortBy = {
-    Created_ASC: 'Created_DESC',
-    Created_DESC: 'Priority_ASC',
-    Priority_ASC: 'Priority_DESC',
-    Priority_DESC: 'Created_ASC',
-}
+// const NextSortBy = {
+//     Created_ASC: 'Created_DESC',
+//     Created_DESC: 'Priority_ASC',
+//     Priority_ASC: 'Priority_DESC',
+//     Priority_DESC: 'Created_ASC',
+//
 
 function App(props) {
     const [sort, setSort] = useState(SortBy.Created_ASC);
@@ -86,13 +98,13 @@ function App(props) {
     const [showModal, setShowModal] = useState(false);
 
     // Change between showing non-completed items vs. all items
-    const onToggleShow = () => {
-        setShowState(NextShowState[showState]);
+    const onChangeShow = (newShowState) => {
+        setShowState(newShowState);
     }
 
     // Change what items are sorted by
-    const onToggleSort = () => {
-        setSort(NextSortBy[sort]);
+    const onChangeSort = (newSortState) => {
+        setSort(newSortState);
     }
 
     // Remove completed items
@@ -135,8 +147,22 @@ function App(props) {
         <div className="App">
             <Title/>
             <ButtonContainer>
-                <Button text={`Show: ${showState}`} onClick={onToggleShow}/>
-                <Button text={`Sort: ${sortField} ${sortOrder}`} onClick={onToggleSort}/>
+                {/* <Button text={`Show: ${showState}`} onClick={onToggleShow}/> */}
+                {/* <Button text={`Sort: ${sortField} ${sortOrder}`} onClick={onToggleSort}/> */}
+                <Dropdown
+                    menuLabel="Show:"
+                    onSelectItem={onChangeShow}
+                    menuState={showState}
+                    options={ShowArr}
+                    menuName="Show">
+                </Dropdown>
+                <Dropdown
+                    menuLabel="Sort By:"
+                    onSelectItem={onChangeSort}
+                    menuState={sort}
+                    options={SortByArr}
+                    menuName="Sort">
+                </Dropdown>
                 <Button text="Remove Completed" onClick={onRemoveCompleted}/>
             </ButtonContainer>
             {!loading && !error &&

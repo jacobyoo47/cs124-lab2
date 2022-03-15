@@ -1,5 +1,5 @@
 import {useState} from 'react';
-import {FaPlusCircle} from 'react-icons/fa';
+import {FaPlusCircle, FaUndo} from 'react-icons/fa';
 import './App.css';
 import Title from './Title';
 import ButtonContainer from './ButtonContainer';
@@ -10,9 +10,11 @@ import ListItem from './ListItem';
 import Icon from './Icon';
 import Modal from './Modal';
 import { initializeApp } from "firebase/app";
-import { getFirestore, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, serverTimestamp } from "firebase/firestore";
-import { useCollectionData } from "react-firebase-hooks/firestore";
+import { getFirestore, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
+import { useCollectionData, useDocumentData} from "react-firebase-hooks/firestore";
 import { generateUniqueID } from "web-vitals/dist/modules/lib/generateUniqueID";
+import Confirmation from './Confirmation';
+import { PriorityToNumber } from './ListItem';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -26,11 +28,10 @@ const firebaseConfig = {
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
 const collectionName = "Users";
-const subcollectionName = "Items";
 // Eventually will change once we add functionality for multiple users
 // For now, have one global user for all list items
 const userDocumentName = "User";
-const fullCollectionPath = `${collectionName}/${userDocumentName}/${subcollectionName}`;
+const collectionPath = `${collectionName}/${userDocumentName}/`;
 
 // Enum for mode of which list items to show
 const ShowState = {
@@ -43,12 +44,6 @@ const ShowArr = [
     'Completed',
     'Uncompleted',
 ]
-// Provide next show state given current show state
-// const NextShowState = {
-//     All: 'Completed',
-//     Completed: 'Uncompleted',
-//     Uncompleted: 'All',
-// }
 
 // Enum for sort condition
 // First element is field, second element is ascending/descending
@@ -64,25 +59,22 @@ const SortByArr = [
     "Priority_ASC",
     "Priority_DESC",
 ]
-// Provide next filter state given current filter state
-// const NextSortBy = {
-//     Created_ASC: 'Created_DESC',
-//     Created_DESC: 'Priority_ASC',
-//     Priority_ASC: 'Priority_DESC',
-//     Priority_DESC: 'Created_ASC',
-//
 
-function App(props) {
+function App() {
     const [sort, setSort] = useState(SortBy.Created_ASC);
     const sortArr = sort.split("_");
     // Extract field and asc/desc order
     const sortField = sortArr[0].toLowerCase();
     const sortOrder = sortArr[1].toLowerCase();
 
-    // TODO: Change to local sort possibly?
-    // When user toggles sort, there is a flash of loading which may be annoying
-    const q = query(collection(db, fullCollectionPath), orderBy(sortField, sortOrder));
-    const [data, loading, error] = useCollectionData(q);
+    const [subcollectionName, setSubcollectionName] = useState("Items");
+    const q = query(collection(db, collectionPath + subcollectionName), orderBy(sortField, sortOrder));
+    const q2 = query(doc(db, collectionPath));
+    const [itemsData, itemsLoading, itemsError] = useCollectionData(q);
+    const [userData, userLoading, userError] = useDocumentData(q2);
+
+    // Allow user to undo recent add/edit/delete operations
+    const [undoStack, setUndoStack] = useState([]);
 
     const [showState, setShowState] = useState(ShowState.All);
     const shouldShow = (item) => {
@@ -96,30 +88,29 @@ function App(props) {
     }
 
     const [showModal, setShowModal] = useState(false);
-
-    // Change between showing non-completed items vs. all items
-    const onChangeShow = (newShowState) => {
-        setShowState(newShowState);
-    }
-
-    // Change what items are sorted by
-    const onChangeSort = (newSortState) => {
-        setSort(newSortState);
-    }
+    const [showConfirmation, setShowConfirmation] = useState(false);
 
     // Remove completed items
     const onRemoveCompleted = () => {
-        data.forEach((item) => {
+        setUndoStack(undoStack.concat([itemsData]));
+
+        const batch = writeBatch(db);
+
+        itemsData.forEach((item) => {
             if (item.completed) {
-                deleteDoc(doc(db, fullCollectionPath, item.id));
+                batch.delete(doc(db, collectionPath + subcollectionName, item.id));
             }
         });
+
+        batch.commit();
     }
 
     // Add item
     const onAddItem = (text, priority) => {
+        setUndoStack(undoStack.concat([itemsData]));
+
         const id = generateUniqueID();
-        setDoc(doc(db, fullCollectionPath, id), {
+        setDoc(doc(db, collectionPath + subcollectionName, id), {
             id: id,
             text: text,
             completed: false,
@@ -130,45 +121,86 @@ function App(props) {
 
     // Delete item by id
     const onDeleteItem = (id) => {
-        deleteDoc(doc(db, fullCollectionPath, id));
+        setUndoStack(undoStack.concat([itemsData]));
+
+        deleteDoc(doc(db, collectionPath + subcollectionName, id));
     }
 
     // Edit item
     const onEditItem = (id, text, completed, priority) => {
-        updateDoc(doc(db, fullCollectionPath, id), {
+        setUndoStack(undoStack.concat([itemsData]));
+
+        updateDoc(doc(db, collectionPath + subcollectionName, id), {
            text: text,
            completed: completed,
            priority: priority,
         });
     }
 
-    // TODO: add loading spinner and error message below
+    // Undo operation so data is brought to previous state
+    const onUndo = () => {
+        const batch = writeBatch(db);
+
+        // Erase all current items
+        itemsData.forEach((item) => {
+            batch.delete(doc(db, collectionPath + subcollectionName, item.id));
+        });
+
+        // Add all items from data in back of undoStack
+        undoStack[undoStack.length - 1].forEach((item) => {
+            batch.set(doc(db, collectionPath + subcollectionName, item.id), {
+                id: item.id,
+                text: item.text,
+                completed: item.completed,
+                priority: item.priority,
+                created: item.created,
+            });
+        })
+
+        // Make sure this operation is atomic
+        batch.commit();
+
+        // Pop off back of undoStack and update the undoStack
+        const newStack = [...undoStack];
+        newStack.pop();
+        setUndoStack(newStack);
+    }
+
+    // TODO: move add, undo, and redo buttons to bottom footer that remains at the bottom
     return (
         <div className="App">
             <Title/>
-            <ButtonContainer>
-                {/* <Button text={`Show: ${showState}`} onClick={onToggleShow}/> */}
-                {/* <Button text={`Sort: ${sortField} ${sortOrder}`} onClick={onToggleSort}/> */}
-                <Dropdown
-                    menuLabel="Show:"
-                    onSelectItem={onChangeShow}
-                    menuState={showState}
-                    options={ShowArr}
-                    menuName="Show">
-                </Dropdown>
-                <Dropdown
-                    menuLabel="Sort By:"
-                    onSelectItem={onChangeSort}
-                    menuState={sort}
-                    options={SortByArr}
-                    menuName="Sort">
-                </Dropdown>
-                <Button text="Remove Completed" onClick={onRemoveCompleted}/>
-            </ButtonContainer>
-            {!loading && !error &&
+            {!itemsLoading && !userLoading && !itemsError && !userError &&
                 <>
+                    <ButtonContainer>
+                        <Dropdown
+                            menuLabel="List:"
+                            onSelectItem={(val) => {
+                                setSubcollectionName(val);
+                                setUndoStack([]);
+                            }}
+                            menuState={subcollectionName}
+                            options={userData.lists}
+                            menuName="List"
+                        />
+                        <Dropdown
+                            menuLabel="Show:"
+                            onSelectItem={setShowState}
+                            menuState={showState}
+                            options={ShowArr}
+                            menuName="Show"
+                        />
+                        <Dropdown
+                            menuLabel="Sort By:"
+                            onSelectItem={setSort}
+                            menuState={sort}
+                            options={SortByArr}
+                            menuName="Sort"
+                        />
+                    </ButtonContainer>
                     <List>
-                        {data.filter((item) => shouldShow(item)).map((item2) =>
+                        {!itemsData.length && <h1 className="empty-placeholder">No current items</h1>}
+                        {itemsData.filter((item) => shouldShow(item)).map((item2) =>
                             <ListItem
                                 key={item2.id}
                                 id={item2.id}
@@ -185,16 +217,38 @@ function App(props) {
                     }}>
                         <FaPlusCircle/>
                     </Icon>
-                    {showModal && <Modal title="Add New List Item" textInputValue={"New Item Name"} priorityInputValue={0} onClose={() => {
-                        setShowModal(false);
-                    }} onSave={(text, priority) => {
-                        onAddItem(text, priority);
-                        setShowModal(false);
-                    }}/>}
+                    {undoStack.length > 0 &&
+                        <Icon buttonStyling="todo-add-button" onClick={() => {
+                            onUndo();
+                        }}>
+                            <FaUndo/>
+                        </Icon>
+                    }
+                    {itemsData && itemsData.some(item =>  item.completed) &&
+                            <Button text="Remove Completed" onClick={() => {setShowConfirmation(true);}}/>
+                    }
+                    {showModal && <Modal title="Add New List Item" textInputValue={"New Item Name"} priorityInputValue={"Low"}
+                        onClose={() => {
+                            setShowModal(false);
+                        }}
+                        onSave={(text, priority) => {
+                            onAddItem(text, PriorityToNumber[priority]);
+                            setShowModal(false);
+                        }}
+                    />}
+                    {showConfirmation && <Confirmation title="Delete Item(s)" body={`Are you sure you want to delete ${itemsData.filter(item => item.completed).length} item(s)?`}
+                        onClose={() => {
+                            setShowConfirmation(false);
+                        }}
+                        onConfirm={() => {
+                            onRemoveCompleted();
+                            setShowConfirmation();
+                        }}
+                    />}
                 </>
             }
-            {loading && <div className="loading-spinner"></div>}
-            {error && <h1>ERROR!!!</h1>}
+            {(itemsLoading || userLoading) && <div className="loading-spinner"></div>}
+            {(itemsError || userError) && <h1 className="empty-placeholder">Error occurred while trying to fetch data. Please try again later.</h1>}
         </div>
     );
 }

@@ -21,16 +21,16 @@ function Modal(props) {
                 </div>
                 <div className="body">
                     <p>Item Name</p>
-                    <input className="modal-input" type="text" name="text" placeholder={props.textInputValue} onChange={(event) => {
+                    <input className="modal-input" type="text" name="text" placeholder={text} onChange={(event) => {
                         setText(event.target.value);
                     }}/>
                     <p>Priority</p>
-                    <select className="modal-input" name="priority" value={props.priorityInputValue} onChange={(event) => {
-                        setPriority(parseInt(event.target.value));
+                    <select className="modal-input" name="priority" value={priority} onChange={(event) => {
+                        setPriority(event.target.value);
                     }}>
-                        <option value="0">0</option>
-                        <option value="1">1</option>
-                        <option value="2">2</option>
+                        <option value="Low">Low</option>
+                        <option value="Medium">Medium</option>
+                        <option value="High">High</option>
                     </select>
                 </div>
                 <div className="footer">

@@ -1,20 +1,18 @@
-import {useState} from 'react';
-import {FaPlusCircle, FaUndo} from 'react-icons/fa';
 import './App.css';
-import Title from './Title';
-import ButtonContainer from './ButtonContainer';
-import Button from './Button';
+import {useState, useEffect} from 'react';
+import {FaPlusCircle, FaUndo} from 'react-icons/fa';
+import {FaEdit} from 'react-icons/fa';
+import {FaTrashAlt} from 'react-icons/fa';
 import Dropdown from './Dropdown';
-import List from './List';
 import ListItem from './ListItem';
-import Icon from './Icon';
 import Modal from './Modal';
+import AddEditItemModal from './AddEditItemModal';
+import AddEditListModal from './AddEditListModal';
+import { PriorityToNumber } from './ListItem';
 import { initializeApp } from "firebase/app";
 import { getFirestore, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useCollectionData, useDocumentData} from "react-firebase-hooks/firestore";
 import { generateUniqueID } from "web-vitals/dist/modules/lib/generateUniqueID";
-import Confirmation from './Confirmation';
-import { PriorityToNumber } from './ListItem';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -54,28 +52,53 @@ const SortBy = {
     Priority_DESC: "Priority_DESC",
 }
 const SortByArr = [
-    "Created_ASC",
-    "Created_DESC",
-    "Priority_ASC",
-    "Priority_DESC",
+    "Created Ascending",
+    "Created Descending",
+    "Priority Ascending",
+    "Priority Descending",
 ]
+// Need these to convert between the dropdown options display string and the actual enum
+const SortStrToEnum = {
+    "Created Ascending": "Created_ASC",
+    "Created Descending": "Created_DESC",
+    "Priority Ascending": "Priority_ASC",
+    "Priority Descending": "Priority_DESC",
+}
+const SortEnumToStr = {
+    "Created_ASC": "Created Ascending",
+    "Created_DESC": "Created Descending",
+    "Priority_ASC": "Priority Ascending",
+    "Priority_DESC": "Priority Descending",
+}
 
 function App() {
-    const [sort, setSort] = useState(SortBy.Created_ASC);
-    const sortArr = sort.split("_");
+    // Sort order for list items
+    const [sortState, setSortState] = useState(SortBy.Created_ASC);
+    const sortArr = sortState.split("_");
     // Extract field and asc/desc order
     const sortField = sortArr[0].toLowerCase();
     const sortOrder = sortArr[1].toLowerCase();
 
-    const [subcollectionName, setSubcollectionName] = useState("Items");
-    const q = query(collection(db, collectionPath + subcollectionName), orderBy(sortField, sortOrder));
-    const q2 = query(doc(db, collectionPath));
-    const [itemsData, itemsLoading, itemsError] = useCollectionData(q);
-    const [userData, userLoading, userError] = useDocumentData(q2);
+    // Firestore query states
+    const userQuery = query(doc(db, collectionPath));
+    const [userData, userLoading, userError] = useDocumentData(userQuery);
+
+    const [subcollectionName, setSubcollectionName] = useState(null);
+    // Set subcollection to first list after user data has loaded
+    useEffect(() => {
+        if (!subcollectionName) {
+            setSubcollectionName(userData ? userData.lists[0] : null);
+        }
+    }, [userData]);
+
+    const itemsQuery = query(collection(db, collectionPath + subcollectionName), orderBy(sortField, sortOrder));
+    const [itemsData, itemsLoading, itemsError] = useCollectionData(itemsQuery);
+
 
     // Allow user to undo recent add/edit/delete operations
     const [undoStack, setUndoStack] = useState([]);
 
+    // Which items are shown to the user
     const [showState, setShowState] = useState(ShowState.All);
     const shouldShow = (item) => {
         if (showState === ShowState.All) {
@@ -87,8 +110,46 @@ function App() {
         }
     }
 
-    const [showModal, setShowModal] = useState(false);
-    const [showConfirmation, setShowConfirmation] = useState(false);
+    // Hidden modals for adding/editing/deleting list items
+    const [showAddItemModal, setShowAddItemModal] = useState(false);
+    const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
+
+    // Hidden modals for adding/editing/deleting lists
+    const [showAddListModal, setShowAddListModal] = useState(false);
+    const [showEditListModal, setShowEditListModal] = useState(false);
+    const [showDeleteListModal, setShowDeleteListModal] = useState(false);
+
+    // Add item
+    const onAddItem = (text, priority) => {
+        setUndoStack(undoStack.concat([itemsData]));
+
+        const id = generateUniqueID();
+        setDoc(doc(db, collectionPath + subcollectionName, id), {
+            id: id,
+            text: text,
+            completed: false,
+            priority: priority,
+            created: serverTimestamp(),
+        });
+    }
+
+    // Edit item
+    const onEditItem = (id, text, completed, priority) => {
+        setUndoStack(undoStack.concat([itemsData]));
+
+        updateDoc(doc(db, collectionPath + subcollectionName, id), {
+           text: text,
+           completed: completed,
+           priority: priority,
+        });
+    }
+
+    // Delete item by id
+    const onDeleteItem = (id) => {
+        setUndoStack(undoStack.concat([itemsData]));
+
+        deleteDoc(doc(db, collectionPath + subcollectionName, id));
+    }
 
     // Remove completed items
     const onRemoveCompleted = () => {
@@ -105,36 +166,77 @@ function App() {
         batch.commit();
     }
 
-    // Add item
-    const onAddItem = (text, priority) => {
-        setUndoStack(undoStack.concat([itemsData]));
+    // Add list
+    const onAddList = (name) => {
+        const newLists = [...userData.lists];
+        newLists.push(name);
+        updateDoc(doc(db, collectionName, userDocumentName), {
+            lists: newLists
+        })
 
-        const id = generateUniqueID();
-        setDoc(doc(db, collectionPath + subcollectionName, id), {
-            id: id,
-            text: text,
-            completed: false,
-            priority: priority,
-            created: serverTimestamp(),
-        });
+        // Update state to be on newly added list
+        setSubcollectionName(name);
     }
 
-    // Delete item by id
-    const onDeleteItem = (id) => {
-        setUndoStack(undoStack.concat([itemsData]));
+    // Edit list name
+    const onEditList = (name) => {
+        // Firestore does not support renaming collections
+        // To rename list, must delete old list and re-add all of its items under new collection name
+        // Use batch to make this operation atomic
+        const batch = writeBatch(db);
 
-        deleteDoc(doc(db, collectionPath + subcollectionName, id));
+        // Remove list from user lists array and replace with new list containing new list name
+        const newLists = userData.lists.map((list) => {
+            if (list === subcollectionName) {
+                return name;
+            } else {
+                return list
+            }
+        });
+        batch.update(doc(db, collectionName, userDocumentName), {
+            lists: newLists
+        });
+
+        // Delete all items under old list name
+        const oldItems = [...itemsData];
+        oldItems.forEach((item) => {
+            batch.delete(doc(db, collectionPath + subcollectionName, item.id));
+        })
+
+        // Add back all items under new list name
+        oldItems.forEach((item) => {
+            batch.set(doc(db, collectionPath + name, item.id), {
+               id: item.id,
+               text: item.text,
+               completed: item.completed,
+               priority: item.priority,
+               created: item.created,
+            });
+        });
+
+        batch.commit();
+
+        // Update state to be on newly edited list
+        setSubcollectionName(name);
     }
 
-    // Edit item
-    const onEditItem = (id, text, completed, priority) => {
-        setUndoStack(undoStack.concat([itemsData]));
-
-        updateDoc(doc(db, collectionPath + subcollectionName, id), {
-           text: text,
-           completed: completed,
-           priority: priority,
+    // Delete list
+    const onDeleteList = (name) => {
+        // First delete all items in list
+        const batch = writeBatch(db);
+        itemsData.forEach((item) => {
+            batch.delete(doc(db, collectionPath + subcollectionName, item.id));
         });
+        batch.commit();
+
+        // Then delete list itself from user array so it doesn't show in dropdown anymore
+        const newLists = userData.lists.filter(list => list !== subcollectionName);
+        updateDoc(doc(db, collectionName, userDocumentName), {
+            lists: newLists
+        })
+
+        // Update state since current subcollection list no longer exists
+        setSubcollectionName(userData.lists[0]);
     }
 
     // Undo operation so data is brought to previous state
@@ -166,15 +268,16 @@ function App() {
         setUndoStack(newStack);
     }
 
-    // TODO: move add, undo, and redo buttons to bottom footer that remains at the bottom
     return (
         <div className="App">
-            <Title/>
+            {(itemsLoading || userLoading) && <div className="loading-spinner"></div>}
+            {(itemsError || userError) && <h1 className="empty-placeholder">Error occurred while trying to fetch data. Please try again later.</h1>}
             {!itemsLoading && !userLoading && !itemsError && !userError &&
                 <>
-                    <ButtonContainer>
+                    {/* Top title bar with list changing buttons/dropdown */}
+                    <div className="todo-text todo-title">
                         <Dropdown
-                            menuLabel="List:"
+                            menuLabel=""
                             onSelectItem={(val) => {
                                 setSubcollectionName(val);
                                 setUndoStack([]);
@@ -183,6 +286,26 @@ function App() {
                             options={userData.lists}
                             menuName="List"
                         />
+                        <button className="todo-icon todo-button" onClick={() => {
+                            setShowAddListModal(true);
+                            }}>
+                            <FaPlusCircle/>
+                        </button>
+                        <button className="todo-edit-button" onClick={() => {
+                            setShowEditListModal(true);
+                        }}>
+                            <FaEdit />
+                        </button>
+                        {userData.lists.length > 1 &&
+                            <button className="todo-delete-button" onClick={() => {
+                                setShowDeleteListModal(true);
+                            }}>
+                                <FaTrashAlt />
+                            </button>
+                        }
+                    </div>
+                    {/* Container for show and sort dropdowns */}
+                    <div className="todo-buttons-container">
                         <Dropdown
                             menuLabel="Show:"
                             onSelectItem={setShowState}
@@ -192,13 +315,16 @@ function App() {
                         />
                         <Dropdown
                             menuLabel="Sort By:"
-                            onSelectItem={setSort}
-                            menuState={sort}
+                            onSelectItem={(val) => {
+                                setSortState(SortStrToEnum[val]);
+                            }}
+                            menuState={SortEnumToStr[sortState]}
                             options={SortByArr}
                             menuName="Sort"
                         />
-                    </ButtonContainer>
-                    <List>
+                    </div>
+                    {/* Container for list items */}
+                    <div className="todo-list">
                         {!itemsData.length && <h1 className="empty-placeholder">No current items</h1>}
                         {itemsData.filter((item) => shouldShow(item)).map((item2) =>
                             <ListItem
@@ -211,44 +337,105 @@ function App() {
                                 onEditItem={onEditItem}
                             />
                         )}
-                    </List>
-                    <Icon buttonStyling="todo-add-button" onClick={() => {
-                        setShowModal(true);
-                    }}>
-                        <FaPlusCircle/>
-                    </Icon>
-                    {undoStack.length > 0 &&
-                        <Icon buttonStyling="todo-add-button" onClick={() => {
-                            onUndo();
+                    </div>
+                    {/* Bottom bar with add, undo, and remove completed buttons */}
+                    <div className="todo-footer">
+                        <button className="todo-icon todo-button" onClick={() => {
+                            setShowAddItemModal(true);
                         }}>
-                            <FaUndo/>
-                        </Icon>
+                            <FaPlusCircle/>
+                        </button>
+                        {itemsData && itemsData.some(item => item.completed) &&
+                                <button className="todo-text todo-button" onClick={() => {
+                                    setShowDeleteItemModal(true);
+                                }}>
+                                    "Remove Completed"
+                                </button>
+                        }
+                        {undoStack.length > 0 &&
+                            <button className="todo-icon todo-button" onClick={() => {
+                                onUndo();
+                            }}>
+                                <FaUndo/>
+                            </button>
+                        }
+                    </div>
+                    {/* Hidden modals for adding/editing/deleting items */}
+                    {showAddItemModal &&
+                        <AddEditItemModal
+                            title="Add New List Item"
+                            text="New Item Name"
+                            priority="Low"
+                            onCancel={() => {
+                                setShowAddItemModal(false);
+                            }}
+                            onConfirm={(text, priority) => {
+                                onAddItem(text, PriorityToNumber[priority]);
+                                setShowAddItemModal(false);
+                            }}
+                        />
                     }
-                    {itemsData && itemsData.some(item =>  item.completed) &&
-                            <Button text="Remove Completed" onClick={() => {setShowConfirmation(true);}}/>
+                    {showDeleteItemModal &&
+                        <Modal
+                            title="Delete Item(s)"
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            onCancel={() => {
+                                setShowDeleteItemModal(false);
+                            }}
+                            onConfirm={() => {
+                                onRemoveCompleted();
+                                setShowDeleteItemModal(false);
+                            }}
+                        >
+                            {`Are you sure you want to delete ${itemsData.filter(item => item.completed).length} item(s)?`}
+                        </Modal>
                     }
-                    {showModal && <Modal title="Add New List Item" textInputValue={"New Item Name"} priorityInputValue={"Low"}
-                        onClose={() => {
-                            setShowModal(false);
-                        }}
-                        onSave={(text, priority) => {
-                            onAddItem(text, PriorityToNumber[priority]);
-                            setShowModal(false);
-                        }}
-                    />}
-                    {showConfirmation && <Confirmation title="Delete Item(s)" body={`Are you sure you want to delete ${itemsData.filter(item => item.completed).length} item(s)?`}
-                        onClose={() => {
-                            setShowConfirmation(false);
-                        }}
-                        onConfirm={() => {
-                            onRemoveCompleted();
-                            setShowConfirmation();
-                        }}
-                    />}
+                    {/* Hidden modals for adding/editing/deleting lists */}
+                    {showAddListModal &&
+                        <AddEditListModal
+                            title="Add New List"
+                            name="New List Name"
+                            onCancel={() => {
+                                setShowAddListModal(false);
+                            }}
+                            onConfirm={(name) => {
+                                onAddList(name);
+                                setShowAddListModal(false);
+                            }}
+                        />
+                    }
+                    {showEditListModal &&
+                        <AddEditListModal
+                            title="Edit List Name"
+                            name={subcollectionName}
+                            onCancel={() => {
+                                setShowEditListModal(false);
+                            }}
+                            onConfirm={(name) => {
+                                onEditList(name);
+                                setShowEditListModal(false);
+                            }}
+                        />
+                    }
+                    {showDeleteListModal &&
+                        <Modal
+                            title="Delete List"
+                            confirmText="Delete"
+                            cancelText="Cancel"
+                            onCancel={() => {
+                                setShowDeleteListModal(false);
+                            }}
+                            onConfirm={() => {
+                                onDeleteList(subcollectionName);
+                                setShowDeleteListModal(false);
+                            }}
+                        >
+                            {`Are you sure you want to delete the list named "${subcollectionName}"?`}
+                        </Modal>
+                    }
                 </>
             }
-            {(itemsLoading || userLoading) && <div className="loading-spinner"></div>}
-            {(itemsError || userError) && <h1 className="empty-placeholder">Error occurred while trying to fetch data. Please try again later.</h1>}
         </div>
     );
 }

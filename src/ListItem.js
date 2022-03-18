@@ -1,9 +1,8 @@
-import Icon from './Icon';
 import {FaEdit} from 'react-icons/fa';
 import {FaTrashAlt} from 'react-icons/fa';
 import {useState} from 'react';
+import AddEditItemModal from './AddEditItemModal';
 import Modal from './Modal';
-import Confirmation from './Confirmation';
 
 // Get color from priority
 const PriorityToColor = {
@@ -27,8 +26,8 @@ export const PriorityToNumber = {
 }
 
 function ListItem(props) {
-    const [showModal, setShowModal] = useState(false);
-    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showEditItemModal, setShowEditItemModal] = useState(false);
+    const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
 
     return (
         <>
@@ -39,44 +38,47 @@ function ListItem(props) {
                 }}/>
                 <span className="todo-task-name">{`${props.text}`}</span>
                 <div className="todo-item-buttons-container">
-                    <Icon buttonStyling="todo-edit-button" onClick={() => {
-                        setShowModal(true);
+                    <button className="todo-edit-button" onClick={() => {
+                        setShowEditItemModal(true);
                     }}>
                         <FaEdit />
-                    </Icon>
-                    <Icon buttonStyling="todo-delete-button" onClick={() => {
-                        setShowConfirmation(true);
+                    </button>
+                    <button className="todo-delete-button" onClick={() => {
+                        setShowDeleteItemModal(true);
                     }}>
                         <FaTrashAlt />
-                    </Icon>
+                    </button>
                 </div>
             </div>
-            {showModal &&
-                <Modal
+            {showEditItemModal &&
+                <AddEditItemModal
                     title="Edit List Item"
-                    textInputValue={props.text}
-                    priorityInputValue={NumberToPriority[props.priority]}
-                    onClose={() => {
-                        setShowModal(false);
+                    text={props.text}
+                    priority={NumberToPriority[props.priority]}
+                    onCancel={() => {
+                        setShowEditItemModal(false);
                     }}
-                    onSave={(text, priority) => {
+                    onConfirm={(text, priority) => {
                         props.onEditItem(props.id, text, props.completed, PriorityToNumber[priority]);
-                        setShowModal(false);
+                        setShowEditItemModal(false);
                     }}
                 />
             }
-            {showConfirmation &&
-                <Confirmation
+            {showDeleteItemModal &&
+                <Modal
                     title="Delete Item(s)"
-                    body="Are you sure you want to delete 1 item?"
-                    onClose={() => {
-                        setShowConfirmation(false);
+                    confirmText="Delete"
+                    cancelText="Cancel"
+                    onCancel={() => {
+                        setShowDeleteItemModal(false);
                     }}
                     onConfirm={() => {
                         props.onDeleteItem(props.id);
-                        setShowConfirmation(false);
+                        setShowDeleteItemModal(false);
                     }}
-                />
+                >
+                    "Are you sure you want to delete 1 item?"
+                </Modal>
             }
         </>
     );

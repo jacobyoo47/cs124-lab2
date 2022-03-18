@@ -18,7 +18,7 @@
     /* margin: 0px 0 12px 0; */
 }
 
-.modal-save-button {
+.modal-confirm-button {
     border: none;
     font-weight: bold;
     background-image: linear-gradient(#00b8e6, #057cc7);
@@ -29,10 +29,6 @@
     font-size: 14px;
     /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
 }
-
-/* .modal-save-button:hover {
-
-} */
 
 .modal-cancel-button {
     border: none;

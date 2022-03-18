@@ -4,16 +4,9 @@ import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
 
-const initialData = [
-    {text: "Go buy groceries", completed: false, id: 0},
-    {text: "Finish Interaction Design homework", completed: false, id: 1},
-    {text: "Play valorant with friends", completed: true, id: 2},
-    {text: "Study for midterms", completed: true, id: 3},
-]
-
 ReactDOM.render(
     <React.StrictMode>
-        <App initialData={initialData}/>
+        <App/>
     </React.StrictMode>,
     document.getElementById('root')
 );

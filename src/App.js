@@ -10,7 +10,7 @@ import AddEditItemModal from './AddEditItemModal';
 import AddEditListModal from './AddEditListModal';
 import { PriorityToNumber } from './ListItem';
 import { initializeApp } from "firebase/app";
-import { getFirestore, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
+import { getFirestore, getDocs, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useCollectionData, useDocumentData} from "react-firebase-hooks/firestore";
 import { generateUniqueID } from "web-vitals/dist/modules/lib/generateUniqueID";
 
@@ -71,6 +71,17 @@ const SortEnumToStr = {
     "Priority_DESC": "Priority Descending",
 }
 
+// Enums for undo types (item, list) and operations (add, edit, delete)
+const UndoType = {
+    Item: "Item",
+    List: "List",
+}
+const UndoOp = {
+    Add: "Add",
+    Edit: "Edit",
+    Delete: "Delete",
+}
+
 function App() {
     // Sort order for list items
     const [sortState, setSortState] = useState(SortBy.Created_ASC);
@@ -89,7 +100,7 @@ function App() {
         if (!subcollectionName) {
             setSubcollectionName(userData ? userData.lists[0] : null);
         }
-    }, [userData]);
+    }, [userData, subcollectionName]);
 
     const itemsQuery = query(collection(db, collectionPath + subcollectionName), orderBy(sortField, sortOrder));
     const [itemsData, itemsLoading, itemsError] = useCollectionData(itemsQuery);
@@ -121,7 +132,13 @@ function App() {
 
     // Add item
     const onAddItem = (text, priority) => {
-        setUndoStack(undoStack.concat([itemsData]));
+        setUndoStack(undoStack.concat([{
+            type: UndoType.Item,
+            op: UndoOp.Add,
+            oldList: subcollectionName,
+            newList: null,
+            data: itemsData,
+        }]));
 
         const id = generateUniqueID();
         setDoc(doc(db, collectionPath + subcollectionName, id), {
@@ -135,7 +152,13 @@ function App() {
 
     // Edit item
     const onEditItem = (id, text, completed, priority) => {
-        setUndoStack(undoStack.concat([itemsData]));
+        setUndoStack(undoStack.concat([{
+            type: UndoType.Item,
+            op: UndoOp.Edit,
+            oldList: subcollectionName,
+            newList: null,
+            data: itemsData
+        }]));
 
         updateDoc(doc(db, collectionPath + subcollectionName, id), {
            text: text,
@@ -146,14 +169,26 @@ function App() {
 
     // Delete item by id
     const onDeleteItem = (id) => {
-        setUndoStack(undoStack.concat([itemsData]));
+        setUndoStack(undoStack.concat([{
+            type: UndoType.Item,
+            op: UndoOp.Delete,
+            oldList: subcollectionName,
+            newList: null,
+            data: itemsData
+        }]));
 
         deleteDoc(doc(db, collectionPath + subcollectionName, id));
     }
 
     // Remove completed items
     const onRemoveCompleted = () => {
-        setUndoStack(undoStack.concat([itemsData]));
+        setUndoStack(undoStack.concat([{
+            type: UndoType.Item,
+            op: UndoOp.Delete,
+            oldList: subcollectionName,
+            newList: null,
+            data: itemsData
+        }]));
 
         const batch = writeBatch(db);
 
@@ -168,18 +203,34 @@ function App() {
 
     // Add list
     const onAddList = (name) => {
+        setUndoStack(undoStack.concat([{
+            type: UndoType.List,
+            op: UndoOp.Add,
+            oldList: null,
+            newList: name,
+            data: [],
+        }]));
+
         const newLists = [...userData.lists];
         newLists.push(name);
         updateDoc(doc(db, collectionName, userDocumentName), {
             lists: newLists
-        })
+        });
 
         // Update state to be on newly added list
         setSubcollectionName(name);
     }
 
     // Edit list name
-    const onEditList = (name) => {
+    const onEditList = (oldName, newName) => {
+        setUndoStack(undoStack.concat([{
+            type: UndoType.List,
+            op: UndoOp.Edit,
+            oldList: oldName,
+            newList: newName,
+            data: itemsData,
+        }]));
+
         // Firestore does not support renaming collections
         // To rename list, must delete old list and re-add all of its items under new collection name
         // Use batch to make this operation atomic
@@ -187,8 +238,8 @@ function App() {
 
         // Remove list from user lists array and replace with new list containing new list name
         const newLists = userData.lists.map((list) => {
-            if (list === subcollectionName) {
-                return name;
+            if (list === oldName) {
+                return newName;
             } else {
                 return list
             }
@@ -205,7 +256,7 @@ function App() {
 
         // Add back all items under new list name
         oldItems.forEach((item) => {
-            batch.set(doc(db, collectionPath + name, item.id), {
+            batch.set(doc(db, collectionPath + newName, item.id), {
                id: item.id,
                text: item.text,
                completed: item.completed,
@@ -217,11 +268,19 @@ function App() {
         batch.commit();
 
         // Update state to be on newly edited list
-        setSubcollectionName(name);
+        setSubcollectionName(newName);
     }
 
     // Delete list
     const onDeleteList = (name) => {
+        setUndoStack(undoStack.concat([{
+            type: UndoType.List,
+            op: UndoOp.Delete,
+            oldList: name,
+            newList: null,
+            data: itemsData,
+        }]));
+
         // First delete all items in list
         const batch = writeBatch(db);
         itemsData.forEach((item) => {
@@ -241,30 +300,65 @@ function App() {
 
     // Undo operation so data is brought to previous state
     const onUndo = () => {
-        const batch = writeBatch(db);
-
-        // Erase all current items
-        itemsData.forEach((item) => {
-            batch.delete(doc(db, collectionPath + subcollectionName, item.id));
-        });
-
-        // Add all items from data in back of undoStack
-        undoStack[undoStack.length - 1].forEach((item) => {
-            batch.set(doc(db, collectionPath + subcollectionName, item.id), {
-                id: item.id,
-                text: item.text,
-                completed: item.completed,
-                priority: item.priority,
-                created: item.created,
-            });
-        })
-
-        // Make sure this operation is atomic
-        batch.commit();
-
-        // Pop off back of undoStack and update the undoStack
         const newStack = [...undoStack];
-        newStack.pop();
+        const undo = newStack.pop();
+
+        if (undo.type === UndoType.Item) { // Undo operation on item(s) within a list
+            const batch = writeBatch(db);
+
+            // Erase all current items from oldList
+            const q = query(collection(db, collectionPath + undo.oldList));
+            getDocs(q).then(res => {
+                res.docs.forEach((item) => {
+                    batch.delete(doc(db, collectionPath + undo.oldList, item.id));
+                });
+
+                // Add all items from data in back of undoStack
+                undo.data.forEach((item) => {
+                    batch.set(doc(db, collectionPath + undo.oldList, item.id), {
+                        id: item.id,
+                        text: item.text,
+                        completed: item.completed,
+                        priority: item.priority,
+                        created: item.created,
+                    });
+                });
+
+                // Make sure this operation is atomic
+                batch.commit();
+                setSubcollectionName(undo.oldList);
+            })
+        } else { // Undo operation on a list
+            if (undo.op === UndoOp.Add) {
+                onDeleteList(undo.newList);
+            } else if (undo.op === UndoOp.Delete) {
+                const batch = writeBatch(db);
+
+                const newLists = [...userData.lists];
+                newLists.push(undo.oldList);
+
+                batch.update(doc(db, collectionName, userDocumentName), {
+                    lists: newLists
+                });
+
+                undo.data.forEach((item) => {
+                    batch.set(doc(db, collectionPath + undo.oldList, item.id), {
+                        id: item.id,
+                        text: item.text,
+                        completed: item.completed,
+                        priority: item.priority,
+                        created: item.created,
+                    });
+                });
+
+                batch.commit();
+                setSubcollectionName(undo.oldList);
+            } else {
+                onEditList(undo.newList, undo.oldList);
+            }
+        }
+
+        // Update the undoStack
         setUndoStack(newStack);
     }
 
@@ -413,7 +507,7 @@ function App() {
                                 setShowEditListModal(false);
                             }}
                             onConfirm={(name) => {
-                                onEditList(name);
+                                onEditList(subcollectionName, name);
                                 setShowEditListModal(false);
                             }}
                         />

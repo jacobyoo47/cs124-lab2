@@ -1,7 +1,6 @@
 import './App.css';
 import {useState, useEffect} from 'react';
 import {FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList} from 'react-icons/fa';
-import {MdPlaylistAdd} from 'react-icons/fc';
 import {IconContext} from 'react-icons';
 import Dropdown from './Dropdown';
 import ListItem from './ListItem';

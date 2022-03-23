@@ -1,8 +1,8 @@
 import './App.css';
 import {useState, useEffect} from 'react';
-import {FaPlusCircle, FaUndo} from 'react-icons/fa';
-import {FaEdit} from 'react-icons/fa';
-import {FaTrashAlt} from 'react-icons/fa';
+import {FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList} from 'react-icons/fa';
+import {MdPlaylistAdd} from 'react-icons/fc';
+import {IconContext} from 'react-icons';
 import Dropdown from './Dropdown';
 import ListItem from './ListItem';
 import Modal from './Modal';
@@ -370,31 +370,43 @@ function App() {
                 <>
                     {/* Top title bar with list changing buttons/dropdown */}
                     <div className="todo-text todo-title">
-                        <Dropdown
-                            menuLabel=""
-                            onSelectItem={(val) => {
-                                setSubcollectionName(val);
-                                setUndoStack([]);
-                            }}
-                            menuState={subcollectionName}
-                            options={userData.lists}
-                            menuName="List"
-                        />
-                        <button className="todo-icon todo-button" onClick={() => {
-                            setShowAddListModal(true);
+                        <div className="todo-list-dropdown-container">
+                            <div className="todo-list-dropdown">
+                                To-Do:
+                                <Dropdown
+                                    menuLabel=""
+                                    onSelectItem={(val) => {
+                                        setSubcollectionName(val);
+                                        setUndoStack([]);
+                                    }}
+                                    menuState={subcollectionName}
+                                    options={userData.lists}
+                                    menuName="List"
+                                />
+                            </div>
+                            <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-add" onClick={() => {
+                                setShowAddListModal(true);
+                                }}>
+                                <FaPlus/>
+                                <IconContext.Provider value={{ size: '25px' }}>
+                                    <FaClipboardList/>
+                                </IconContext.Provider>
+                            </button>
+                            <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-edit" onClick={() => {
+                                setShowEditListModal(true);
                             }}>
-                            <FaPlusCircle/>
-                        </button>
-                        <button className="todo-edit-button" onClick={() => {
-                            setShowEditListModal(true);
-                        }}>
-                            <FaEdit />
-                        </button>
+                                <IconContext.Provider value={{ size: '27px' }}>
+                                    <FaEdit />
+                                </IconContext.Provider>
+                            </button>
+                        </div>
                         {userData.lists.length > 1 &&
-                            <button className="todo-delete-button" onClick={() => {
+                            <button className="todo-list-dropdown-button todo-list-dropdown-trash" onClick={() => {
                                 setShowDeleteListModal(true);
                             }}>
-                                <FaTrashAlt />
+                                <IconContext.Provider value={{ size: '25px' }}>
+                                    <FaTrashAlt />
+                                </IconContext.Provider>
                             </button>
                         }
                     </div>
@@ -443,7 +455,7 @@ function App() {
                                 <button className="todo-text todo-button" onClick={() => {
                                     setShowDeleteItemModal(true);
                                 }}>
-                                    "Remove Completed"
+                                    Remove Completed
                                 </button>
                         }
                         {undoStack.length > 0 &&

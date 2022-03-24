@@ -47,12 +47,16 @@ const ShowArr = [
 const SortBy = {
     Created_ASC: "Created_ASC",
     Created_DESC: "Created_DESC",
+    Text_ASC: "Text_ASC",
+    Text_DESC: "Text_DESC",
     Priority_ASC: "Priority_ASC",
     Priority_DESC: "Priority_DESC",
 }
 const SortByArr = [
     "Created Ascending",
     "Created Descending",
+    "Text Ascending",
+    "Text Descending",
     "Priority Ascending",
     "Priority Descending",
 ]
@@ -60,12 +64,16 @@ const SortByArr = [
 const SortStrToEnum = {
     "Created Ascending": "Created_ASC",
     "Created Descending": "Created_DESC",
+    "Text Ascending": "Text_ASC",
+    "Text Descending": "Text_DESC",
     "Priority Ascending": "Priority_ASC",
     "Priority Descending": "Priority_DESC",
 }
 const SortEnumToStr = {
     "Created_ASC": "Created Ascending",
     "Created_DESC": "Created Descending",
+    "Text_ASC": "Text Ascending",
+    "Text_DESC": "Text Descending",
     "Priority_ASC": "Priority Ascending",
     "Priority_DESC": "Priority Descending",
 }

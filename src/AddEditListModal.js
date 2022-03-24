@@ -19,7 +19,7 @@ function AddEditListModal(props) {
             }}
         >
             <FormControl variant="standard" sx={{ m: 1, width: 200, paddingBottom: 1 }}>
-                <TextField id="list-name-input" label="List Name" variant="standard" value={name} onChange={(event) => {
+                <TextField autoFocus id="list-name-input" label="List Name" variant="standard" value={name} onChange={(event) => {
                         setName(event.target.value);
                     }}
                     onKeyDown={(event) => {

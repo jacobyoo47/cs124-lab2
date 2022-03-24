@@ -23,7 +23,7 @@ function AddEditItemModal(props) {
             }}
         >
             <FormControl variant="standard" sx={{ m: 1, width: 200, paddingBottom: 1 }}>
-                <TextField id="task-name-input" label="Task Name" variant="standard" value={text} onChange={(event) => {
+                <TextField autoFocus id="task-name-input" label="Task Name" variant="standard" value={text} onChange={(event) => {
                         setText(event.target.value);
                     }}
                     onKeyDown={(event) => {

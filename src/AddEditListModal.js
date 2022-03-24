@@ -1,5 +1,7 @@
 import Modal from "./Modal";
 import {useState} from 'react';
+import FormControl from '@mui/material/FormControl';
+import TextField from '@mui/material/TextField';
 
 function AddEditListModal(props) {
     const [name, setName] = useState(props.name);
@@ -16,18 +18,17 @@ function AddEditListModal(props) {
                 props.onConfirm(name);
             }}
         >
-        <p>List Name</p>
-        <input autoFocus className="modal-input" type="text" name="text" placeholder={name}
-            onChange={(event) => {
-                setName(event.target.value);
-            }}
-            onKeyDown={(event) => {
-                if (event.key === "Enter") {
-                    props.onConfirm(name);
-                }
-            }}
-        />
-    </Modal>
+            <FormControl variant="standard" sx={{ m: 1, width: 200, paddingBottom: 1 }}>
+                <TextField id="list-name-input" label="List Name" variant="standard" value={name} onChange={(event) => {
+                        setName(event.target.value);
+                    }}
+                    onKeyDown={(event) => {
+                        if (event.key === "Enter") {
+                            props.onConfirm(name);
+                        }
+                }}/>
+            </FormControl>
+        </Modal>
     )
 }
 

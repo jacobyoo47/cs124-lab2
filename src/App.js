@@ -371,9 +371,9 @@ function App() {
                     <div className="todo-text todo-title">
                         <div className="todo-list-dropdown-container">
                             <div className="todo-list-dropdown">
-                                To-Do:
+                                {/* To-Do: */}
                                 <Dropdown
-                                    menuLabel=""
+                                    menuLabel="To-Do:"
                                     onSelectItem={(val) => {
                                         setSubcollectionName(val);
                                         setUndoStack([]);
@@ -383,6 +383,8 @@ function App() {
                                     menuName="List"
                                 />
                             </div>
+                        </div>
+                        <div className="todo-list-dropdown-buttons-container">
                             <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-add" onClick={() => {
                                 setShowAddListModal(true);
                                 }}>
@@ -398,19 +400,19 @@ function App() {
                                     <FaEdit />
                                 </IconContext.Provider>
                             </button>
+                            {userData.lists.length > 1 &&
+                                <button className="todo-list-dropdown-button todo-list-dropdown-trash" onClick={() => {
+                                    setShowDeleteListModal(true);
+                                }}>
+                                    <IconContext.Provider value={{ size: '25px' }}>
+                                        <FaTrashAlt />
+                                    </IconContext.Provider>
+                                </button>
+                            }
                         </div>
-                        {userData.lists.length > 1 &&
-                            <button className="todo-list-dropdown-button todo-list-dropdown-trash" onClick={() => {
-                                setShowDeleteListModal(true);
-                            }}>
-                                <IconContext.Provider value={{ size: '25px' }}>
-                                    <FaTrashAlt />
-                                </IconContext.Provider>
-                            </button>
-                        }
                     </div>
                     {/* Container for show and sort dropdowns */}
-                    <div className="todo-buttons-container">
+                    <div className="todo-filters-container">
                         <Dropdown
                             menuLabel="Show:"
                             onSelectItem={setShowState}

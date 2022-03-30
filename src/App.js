@@ -412,7 +412,7 @@ function App() {
                                 </IconContext.Provider>
                             </button>
                             {userData.lists.length > 1 &&
-                                <button className="todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${subcollectionName}`} onClick={() => {
+                                <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${subcollectionName}`} onClick={() => {
                                     setShowDeleteListModal(true);
                                 }}>
                                     <IconContext.Provider value={{ size: '25px' }}>

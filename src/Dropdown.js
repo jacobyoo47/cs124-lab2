@@ -5,7 +5,7 @@ import FormControl from '@mui/material/FormControl';
 
 function Dropdown(props) {
     return (
-        <>
+        <div>
             <FormControl variant="standard" sx={{ maxWidth: 200 }}>
                 <InputLabel id={props.menuName}>{props.menuLabel}</InputLabel>
                 <Select
@@ -19,7 +19,7 @@ function Dropdown(props) {
                     {props.options.map(o => <MenuItem value={o} key={o}>{o}</MenuItem>)}
                 </Select>
             </FormControl>
-        </>
+        </div>
     )
 }
 

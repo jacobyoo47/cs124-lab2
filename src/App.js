@@ -396,7 +396,7 @@ function App() {
                             </div>
                         </div>
                         <div className="todo-list-dropdown-buttons-container">
-                            <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-add" onClick={() => {
+                            <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-add" aria-label="add list" onClick={() => {
                                 setShowAddListModal(true);
                                 }}>
                                 <FaPlus/>
@@ -404,7 +404,7 @@ function App() {
                                     <FaClipboardList/>
                                 </IconContext.Provider>
                             </button>
-                            <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-edit" onClick={() => {
+                            <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-edit" aria-label={`edit list name of list named ${subcollectionName}`} onClick={() => {
                                 setShowEditListModal(true);
                             }}>
                                 <IconContext.Provider value={{ size: '27px' }}>
@@ -412,7 +412,7 @@ function App() {
                                 </IconContext.Provider>
                             </button>
                             {userData.lists.length > 1 &&
-                                <button className="todo-list-dropdown-button todo-list-dropdown-trash" onClick={() => {
+                                <button className="todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${subcollectionName}`} onClick={() => {
                                     setShowDeleteListModal(true);
                                 }}>
                                     <IconContext.Provider value={{ size: '25px' }}>
@@ -458,7 +458,7 @@ function App() {
                     </div>
                     {/* Bottom bar with add, undo, and remove completed buttons */}
                     <div className="todo-footer">
-                        <button className="todo-icon todo-button" onClick={() => {
+                        <button className="todo-icon todo-button" aria-label={`add item to list named ${subcollectionName}`} onClick={() => {
                             setShowAddItemModal(true);
                         }}>
                             <FaPlusCircle/>
@@ -471,7 +471,7 @@ function App() {
                                 </button>
                         }
                         {undoStack.length > 0 &&
-                            <button className="todo-icon todo-button" onClick={() => {
+                            <button className="todo-icon todo-button" aria-label="undo previous operation" onClick={() => {
                                 onUndo();
                             }}>
                                 <FaUndo/>

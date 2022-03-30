@@ -33,17 +33,17 @@ function ListItem(props) {
         <>
             <div className={`todo-task ${props.completed ? "completed" : ""}`}>
                 <div className={`todo-task-priority-tab ${PriorityToColor[NumberToPriority[props.priority]]}`}></div>
-                <input type="checkbox" className="todo-task-checkbox" checked={props.completed} onChange={() => {
+                <input type="checkbox" className="todo-task-checkbox" checked={props.completed} aria-label={`item with text ${props.text} completed`} onChange={() => {
                     props.onEditItem(props.id, props.text, !props.completed, props.priority)
                 }}/>
                 <span className="todo-task-name">{`${props.text}`}</span>
                 <div className="todo-item-buttons-container">
-                    <button className="todo-edit-button" onClick={() => {
+                    <button className="todo-edit-button" aria-label={`edit item with text ${props.text}`} onClick={() => {
                         setShowEditItemModal(true);
                     }}>
                         <FaEdit />
                     </button>
-                    <button className="todo-delete-button" onClick={() => {
+                    <button className="todo-delete-button" aria-label={`delete item with text ${props.text}`} onClick={() => {
                         setShowDeleteItemModal(true);
                     }}>
                         <FaTrashAlt />

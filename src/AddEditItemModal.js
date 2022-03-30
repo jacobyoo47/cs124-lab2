@@ -36,7 +36,6 @@ function AddEditItemModal(props) {
                 <InputLabel id="priority">Priority</InputLabel>
                 <Select
                     label="Priority"
-                    // className="todo-list-dropdown-select"
                     name="priority"
                     id="priority"
                     value={priority}

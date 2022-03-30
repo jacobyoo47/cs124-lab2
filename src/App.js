@@ -116,6 +116,10 @@ function App() {
     // Allow user to undo recent add/edit/delete operations
     const [undoStack, setUndoStack] = useState([]);
 
+    const pushUndoStack = (undoOp) => {
+        setUndoStack(undoStack.concat([undoOp]));
+    }
+
     // Which items are shown to the user
     const [showState, setShowState] = useState(ShowState.All);
     const shouldShow = (item) => {
@@ -139,13 +143,13 @@ function App() {
 
     // Add item
     const onAddItem = (text, priority) => {
-        setUndoStack(undoStack.concat([{
+        pushUndoStack({
             type: UndoType.Item,
             op: UndoOp.Add,
             oldList: subcollectionName,
             newList: null,
             data: itemsData,
-        }]));
+        });
 
         const id = generateUniqueID();
         setDoc(doc(db, collectionPath + subcollectionName, id), {
@@ -159,13 +163,13 @@ function App() {
 
     // Edit item
     const onEditItem = (id, text, completed, priority) => {
-        setUndoStack(undoStack.concat([{
+        pushUndoStack({
             type: UndoType.Item,
             op: UndoOp.Edit,
             oldList: subcollectionName,
             newList: null,
             data: itemsData
-        }]));
+        });
 
         updateDoc(doc(db, collectionPath + subcollectionName, id), {
            text: text,
@@ -176,26 +180,26 @@ function App() {
 
     // Delete item by id
     const onDeleteItem = (id) => {
-        setUndoStack(undoStack.concat([{
+        pushUndoStack({
             type: UndoType.Item,
             op: UndoOp.Delete,
             oldList: subcollectionName,
             newList: null,
             data: itemsData
-        }]));
+        });
 
         deleteDoc(doc(db, collectionPath + subcollectionName, id));
     }
 
     // Remove completed items
     const onRemoveCompleted = () => {
-        setUndoStack(undoStack.concat([{
+        pushUndoStack({
             type: UndoType.Item,
             op: UndoOp.Delete,
             oldList: subcollectionName,
             newList: null,
             data: itemsData
-        }]));
+        });
 
         const batch = writeBatch(db);
 
@@ -210,13 +214,13 @@ function App() {
 
     // Add list
     const onAddList = (name) => {
-        setUndoStack(undoStack.concat([{
+        pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Add,
             oldList: null,
             newList: name,
             data: [],
-        }]));
+        });
 
         const newLists = [...userData.lists];
         newLists.push(name);
@@ -230,13 +234,13 @@ function App() {
 
     // Edit list name
     const onEditList = (oldName, newName) => {
-        setUndoStack(undoStack.concat([{
+        pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Edit,
             oldList: oldName,
             newList: newName,
             data: itemsData,
-        }]));
+        });
 
         // Firestore does not support renaming collections
         // To rename list, must delete old list and re-add all of its items under new collection name
@@ -280,13 +284,13 @@ function App() {
 
     // Delete list
     const onDeleteList = (name) => {
-        setUndoStack(undoStack.concat([{
+        pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Delete,
             oldList: name,
             newList: null,
             data: itemsData,
-        }]));
+        });
 
         // First delete all items in list
         const batch = writeBatch(db);
@@ -384,7 +388,6 @@ function App() {
                                     menuLabel="To-Do:"
                                     onSelectItem={(val) => {
                                         setSubcollectionName(val);
-                                        setUndoStack([]);
                                     }}
                                     menuState={subcollectionName}
                                     options={userData.lists}

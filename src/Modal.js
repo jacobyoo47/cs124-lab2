@@ -1,38 +1,33 @@
-import {useState} from "react";
 import {FaRegWindowClose} from 'react-icons/fa';
 import './Modal.css'
-import Icon from "./Icon";
 
 
 function Modal(props) {
-    const [text, setText] = useState(props.textInputValue);
-
     return (
         <div className="modal">
             <div className="content">
                 <div className="header">
                     <h4 className="title">{props.title}</h4>
-                    <Icon buttonStyling="modal-close-button" onClick={() => {
-                        props.onClose();
+                    <button className="modal-close-button" onClick={() => {
+                        props.onCancel();
                     }}>
                         <FaRegWindowClose/>
-                    </Icon>
+                    </button>
                 </div>
                 <div className="body">
-                    <p>Item Name</p>
-                    <input className="modal-input" type="text" name="text" placeholder={props.textInputValue} onChange={(event) => {
-                        setText(event.target.value);
-                    }}/>
+                    {props.children}
                 </div>
                 <div className="footer">
-                    <Icon buttonStyling="modal-save-button" text="Save Item" onClick={() => {
-                        props.onSave(text);
+                    <button className="modal-confirm-button" onClick={() => {
+                        props.onConfirm();
                     }}>
-                    </Icon>
-                    <Icon buttonStyling="modal-cancel-button" text="Cancel" onClick={() => {
-                        props.onClose();
+                        {props.confirmText}
+                    </button>
+                    <button className="modal-cancel-button" onClick={() => {
+                        props.onCancel();
                     }}>
-                    </Icon>
+                        {props.cancelText}
+                    </button>
                 </div>
             </div>
         </div>

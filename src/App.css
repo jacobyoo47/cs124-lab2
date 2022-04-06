@@ -89,9 +89,9 @@
 .todo-filters-container {
   display: flex;
   justify-content: flex-start;
-  position: fixed;
+  position: relative;
+  z-index: -1;
   top: 75px;
-  width: 100%;
   background-color: #a8d3e3;
   margin-top: 5px;
   margin-left: 8px;
@@ -100,7 +100,7 @@
 
 .todo-list {
   overflow: auto;
-  padding-top: 130px;
+  padding-top: 80px;
   padding-bottom: 80px;
 }
 

@@ -450,7 +450,7 @@ function App() {
                     <div className="todo-text todo-title">
                         <div className="todo-list-dropdown-container">
                             <div className="todo-list-dropdown">
-                                {/* To-Do: CHANGE ID TO NAME MAPPING */}
+                                {/* To-Do: */}
                                 <Dropdown
                                     menuLabel="To-Do:"
                                     onSelectItem={(val) => {
@@ -481,13 +481,8 @@ function App() {
                                     <FaEdit />
                                 </IconContext.Provider>
                             </button>
-<<<<<<< HEAD
-                            {userData.lists.length > 1 &&
-                                <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${subcollectionName}`} onClick={() => {
-=======
                             {listsData.length > 1 &&
-                                <button className="todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${listInfo.listName}`} onClick={() => {
->>>>>>> 1b37939 (Change data schema according to PR suggestion)
+                                <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${listInfo.listName}`} onClick={() => {
                                     setShowDeleteListModal(true);
                                 }}>
                                     <IconContext.Provider value={{ size: '25px' }}>

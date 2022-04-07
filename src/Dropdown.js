@@ -10,7 +10,6 @@ function Dropdown(props) {
                 <InputLabel id={props.menuName}>{props.menuLabel}</InputLabel>
                 <Select
                     label={props.menuName}
-                    // className="todo-list-dropdown-select"
                     name={props.menuName}
                     id={props.menuName}
                     value={props.menuState}

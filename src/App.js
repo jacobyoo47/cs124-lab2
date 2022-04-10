@@ -450,9 +450,11 @@ function App() {
                     <div className="todo-text todo-title">
                         <div className="todo-list-dropdown-container">
                             <div className="todo-list-dropdown">
-                                {/* To-Do: */}
+                                <span class="todo-list-dropdown-label">To-Do:</span>
                                 <Dropdown
-                                    menuLabel="To-Do:"
+                                    selectClass={"main-list-select-mui"}
+                                    dropdownWidth={200}
+                                    menuLabel=""
                                     onSelectItem={(val) => {
                                         setListInfo({
                                             listId: listNameToId(val),

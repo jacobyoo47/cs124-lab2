@@ -5,8 +5,8 @@ import FormControl from '@mui/material/FormControl';
 
 function Dropdown(props) {
     return (
-        <div>
-            <FormControl variant="standard" sx={{ maxWidth: 200 }}>
+        <div className={props.selectClass}>
+            <FormControl variant="standard" sx={{ maxWidth: props.dropdownWidth }}>
                 <InputLabel id={props.menuName}>{props.menuLabel}</InputLabel>
                 <Select
                     label={props.menuName}

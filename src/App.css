@@ -172,7 +172,7 @@
   background-image: linear-gradient(#00b8e6, #057cc7);
   border: none;
   border-radius: 10px;
-  font-size: 10px;
+  font-size: 15px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   margin: 12px 2px 12px 0;
 }
@@ -207,6 +207,13 @@
 
   .todo-delete-button {
     font-size: 23px;
+  }
+
+  .todo-button {
+    height: 60px;
+    font-size: 20px;
+    border-radius: 30px;
+    padding: 0 15px 0 15px;
   }
 }
 

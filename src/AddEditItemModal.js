@@ -35,9 +35,8 @@ function AddEditItemModal(props) {
             <FormControl variant="standard" sx={{ m: 1, width: 200 }}>
                 <InputLabel id="priority">Priority</InputLabel>
                 <Select
-                    label="Priority"
                     name="priority"
-                    id="priority"
+                    labelId="priority"
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
                 >

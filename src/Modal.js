@@ -10,7 +10,7 @@ function Modal(props) {
                 <div className="content">
                     <div className="header">
                         <h4 className="title">{props.title}</h4>
-                        <button className="modal-close-button" onClick={() => {
+                        <button autoFocus className="modal-close-button" aria-label={props.cancelText} onClick={() => {
                             props.onCancel();
                         }}>
                             <FaRegWindowClose/>

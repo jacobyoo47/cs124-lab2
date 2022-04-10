@@ -4,9 +4,9 @@ import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList } fro
 import { IconContext } from 'react-icons';
 import Dropdown from './Dropdown';
 import ListItem from './ListItem';
-import Modal from './Modal';
 import AddEditItemModal from './AddEditItemModal';
 import AddEditListModal from './AddEditListModal';
+import DeleteModal from './DeleteModal';
 import { PriorityToNumber } from './ListItem';
 import { initializeApp } from "firebase/app";
 import { getFirestore, getDocs, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, where, serverTimestamp, writeBatch } from "firebase/firestore";
@@ -536,7 +536,7 @@ function App() {
                             <FaPlusCircle />
                         </button>
                         {itemsData && itemsData.some(item => item.completed) &&
-                            <button className="todo-text todo-button" onClick={() => {
+                            <button className="todo-text todo-button" aria-label={`remove completed items for list named ${listInfo.listName}`} onClick={() => {
                                 setShowDeleteItemModal(true);
                             }}>
                                 Remove Completed
@@ -566,10 +566,9 @@ function App() {
                         />
                     }
                     {showDeleteItemModal &&
-                        <Modal
+                        <DeleteModal
                             title="Delete Item(s)"
-                            confirmText="Delete"
-                            cancelText="Cancel"
+                            text={`Are you sure you want to delete ${itemsData.filter(item => item.completed).length} item(s)?`}
                             onCancel={() => {
                                 setShowDeleteItemModal(false);
                             }}
@@ -577,9 +576,7 @@ function App() {
                                 onRemoveCompleted();
                                 setShowDeleteItemModal(false);
                             }}
-                        >
-                            {`Are you sure you want to delete ${itemsData.filter(item => item.completed).length} item(s)?`}
-                        </Modal>
+                        />
                     }
                     {/* Hidden modals for adding/editing/deleting lists */}
                     {showAddListModal &&
@@ -597,7 +594,6 @@ function App() {
                     }
                     {showEditListModal &&
                         <AddEditListModal
-
                             title="Edit List Name"
                             name={listInfo.listName}
                             onCancel={() => {
@@ -610,10 +606,9 @@ function App() {
                         />
                     }
                     {showDeleteListModal &&
-                        <Modal
+                        <DeleteModal
                             title="Delete List"
-                            confirmText="Delete"
-                            cancelText="Cancel"
+                            text={`Are you sure you want to delete the list named "${listInfo.listName}"?`}
                             onCancel={() => {
                                 setShowDeleteListModal(false);
                             }}
@@ -621,9 +616,7 @@ function App() {
                                 onDeleteList(listInfo.listId, listInfo.listName);
                                 setShowDeleteListModal(false);
                             }}
-                        >
-                            {`Are you sure you want to delete the list named "${listInfo.listName}"?`}
-                        </Modal>
+                        />
                     }
                 </>
             }

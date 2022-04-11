@@ -29,22 +29,23 @@ function ListItem(props) {
     const [showEditItemModal, setShowEditItemModal] = useState(false);
     const [showDeleteItemModal, setShowDeleteItemModal] = useState(false);
     const priorityStr = NumberToPriority[props.priority];
+    const statusStr = props.completed ? "completed" : "uncompleted";
 
     return (
         <>
             <div className={`todo-task ${props.completed ? "completed" : ""}`}>
                 <div className={`todo-task-priority-tab ${PriorityToColor[priorityStr]}`}></div>
-                <input type="checkbox" className="todo-task-checkbox" checked={props.completed} aria-label={`item with text ${props.text} and ${priorityStr} priority`} onChange={() => {
+                <input type="checkbox" className="todo-task-checkbox" checked={props.completed} aria-label={`${statusStr} item with text ${props.text} and ${priorityStr} priority`} onChange={() => {
                     props.onEditItem(props.id, props.text, !props.completed, props.priority)
                 }}/>
                 <span className="todo-task-name">{`${props.text}`}</span>
                 <div className="todo-item-buttons-container">
-                    <button className="todo-edit-button" aria-label={`edit item with text ${props.text} and ${priorityStr} priority`} onClick={() => {
+                    <button className="todo-edit-button" aria-label={`edit ${statusStr} item with text ${props.text} and ${priorityStr} priority`} onClick={() => {
                         setShowEditItemModal(true);
                     }}>
                         <FaEdit />
                     </button>
-                    <button className="todo-delete-button" aria-label={`delete item with text ${props.text} and ${priorityStr} priority`} onClick={() => {
+                    <button className="todo-delete-button" aria-label={`delete ${statusStr} item with text ${props.text} and ${priorityStr} priority`} onClick={() => {
                         setShowDeleteItemModal(true);
                     }}>
                         <FaTrashAlt />

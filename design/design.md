@@ -1,3 +1,11 @@
+## VIDEO DEMO LINKS:
+
+Demo 1 - Screen Reader demonstration [Link](https://youtu.be/1kzSXAjBmlw)
+
+Demo 2 - Keyboard Navigation demonstration [Link](https://youtu.be/J86ilS-cDME)
+
+See the descriptions of each video for specific keypresses.
+
 ## Design Decisions:
 One large design change we made was regarding the data schema in Firestore. Based off of some feedback from the previous lab PR, we found it easier to have a top-level "Lists" collection, where each document within has a userId, listId, and listName, as well as a "Items" subcollection that contains the items within that list. Previously, we had a top-level "Users" collection with "Items" subcollection, but making changes to lists and having multiple lists was more cumbersome. This new structure provides more flexibility and also prepares us for next week's Authentication/Authorization lab where users can share lists with each other. It took some work to refactor our code to work with the new schema, but in the end, it was worth it.
 

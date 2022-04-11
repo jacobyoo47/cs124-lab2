@@ -16,22 +16,34 @@
   font-size: 18px;
   font-weight: bold;
   position: fixed;
+  z-index: 10;
   top: 0;
   width: 100%;
-  height: 60px;
+  height: 70px;
   background-image: linear-gradient(#00b8e6, #057cc7);
   /* border-radius: 0px 0px 30px 30px; */
   /* box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19); */
-  padding: 10px 0 0 0;
+  padding: 0 0 0 0;
   display: flex;
   justify-content: space-between;
+  align-items: center;
 }
 
 .todo-list-dropdown {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  justify-content: center;
   margin-left: 8px;
+}
+
+.todo-list-dropdown-label {
+  height: 7px;
+  font-size: 20px;
+}
+
+.todo-mui-dropdown {
+  color: white;
 }
 
 /* .todo-list-dropdown-select {
@@ -51,8 +63,8 @@
   background-color: transparent;
   color: white;
   border-radius: 10px;
-  padding: 5px 5px 35px 5px;
-  margin: 12px 0 0 5px;
+  padding: 0px 5px 35px 5px;
+  margin: 5px 0 0 5px;
   font-size: 14px;
 }
 
@@ -61,11 +73,11 @@
 }
 
 .todo-list-dropdown-edit {
-  margin-top: 12px;
+  margin-top: 6px;
 }
 
 .todo-list-dropdown-trash {
-  margin-top: 12px;
+  /* margin-top: 12px; */
   margin-right: 4px;
 }
 
@@ -85,9 +97,9 @@
 .todo-filters-container {
   display: flex;
   justify-content: flex-start;
-  position: fixed;
+  position: relative;
+  z-index: 0;
   top: 75px;
-  width: 100%;
   background-color: #a8d3e3;
   margin-top: 5px;
   margin-left: 8px;
@@ -96,16 +108,18 @@
 
 .todo-list {
   overflow: auto;
-  padding-top: 130px;
+  padding-top: 80px;
   padding-bottom: 80px;
 }
 
 .todo-task {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   background: white;
   border-radius: 8px;
   padding: 2px;
+  min-height: 30px;
   margin: 7px 3px 0 3px;
   flex-grow: 1;
   text-align: start;
@@ -115,6 +129,7 @@
 
 .todo-task-priority-tab {
   border-radius: 8px;
+  align-self: stretch;
   padding: 4px;
 }
 
@@ -138,7 +153,7 @@
 .todo-task-name {
   font-family: Verdana, Arial, sans-serif;
   font-size: 14px;
-  max-width: 73%;
+  max-width: calc(100vw - 110px); /* 100% of screen width - space needed for buttons/checkboxes */
   margin: 0 auto 3px 8px;
   justify-self: center;
   align-self: center;
@@ -146,7 +161,7 @@
 }
 
 .todo-task-checkbox {
-  margin: 15px 0px 13px 10px;
+  margin: 11px 0px 13px 10px;
   width: 13px;
   min-width: 13px;
   height: 13px;
@@ -164,7 +179,7 @@
   background-image: linear-gradient(#00b8e6, #057cc7);
   border: none;
   border-radius: 10px;
-  font-size: 10px;
+  font-size: 15px;
   box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);
   margin: 12px 2px 12px 0;
 }
@@ -174,7 +189,7 @@
 }
 
 .todo-edit-button {
-  color: #4994bf;
+  color: #165ACF;
   background: none;
   border: none;
   /* margin: 12px 0 12px auto; */
@@ -185,6 +200,61 @@
   background: none;
   border: none;
   margin: 12px 2px 12px 0;
+}
+
+/* RESPONSIVE SIZING: */
+@media screen and (min-width: 480px) {
+  .todo-task-name {
+    font-size: 18px;
+    max-width: calc(100vw - 130px); /* 100% of screen width - space needed for buttons/checkboxes */
+  }
+
+  .todo-edit-button {
+    font-size: 23px;
+  }
+
+  .todo-delete-button {
+    font-size: 23px;
+  }
+
+  .todo-button {
+    height: 60px;
+    font-size: 20px;
+    border-radius: 30px;
+    padding: 0 15px 0 15px;
+  }
+
+  .todo-title {
+    height: 100px;
+  }
+
+  .todo-filters-container{
+    top: 115px;
+  }
+
+  .todo-list {
+    padding-top: 115px;
+  }
+
+  .todo-list-dropdown {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: center;
+    margin-left: 8px;
+  }
+
+  .todo-list-dropdown-label {
+    height: 20px;
+    margin-top: 12px;
+    font-size: 30px;
+  }
+
+  .main-list-select-mui {
+    font-size: 40px;
+    margin-left: 10px;
+    margin-bottom: 10px;
+  }
 }
 
 .loading-spinner {

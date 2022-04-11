@@ -5,21 +5,19 @@ import FormControl from '@mui/material/FormControl';
 
 function Dropdown(props) {
     return (
-        <>
-            <FormControl variant="standard" sx={{ maxWidth: 200 }}>
+        <div className={props.selectClass}>
+            <FormControl variant="standard" sx={{ maxWidth: props.dropdownWidth }}>
                 <InputLabel id={props.menuName}>{props.menuLabel}</InputLabel>
                 <Select
-                    label={props.menuName}
-                    // className="todo-list-dropdown-select"
+                    labelId={props.menuName}
                     name={props.menuName}
-                    id={props.menuName}
                     value={props.menuState}
                     onChange={(e) => props.onSelectItem(e.target.value)}
                 >
-                    {props.options.map(o => <MenuItem value={o} key={o}>{o}</MenuItem>)}
+                    {props.options.map(o => <MenuItem value={o} key={o} aria-label={o}>{o}</MenuItem>)}
                 </Select>
             </FormControl>
-        </>
+        </div>
     )
 }
 

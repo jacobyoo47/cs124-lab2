@@ -12,6 +12,18 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, getDocs, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, where, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { generateUniqueID } from "web-vitals/dist/modules/lib/generateUniqueID";
+import {
+    useAuthState,
+    useCreateUserWithEmailAndPassword,
+    useSignInWithEmailAndPassword,
+    useSignInWithGoogle
+} from 'react-firebase-hooks/auth';
+import {
+    getAuth,
+    sendEmailVerification,
+    signOut
+} from "firebase/auth";
+import TabList from './TabList';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -24,6 +36,7 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const auth = getAuth();
 const collectionName = "Lists";
 const subcollectionName = "Items";
 // Eventually will change once we add functionality for multiple users
@@ -90,6 +103,93 @@ const UndoOp = {
 }
 
 function App() {
+    const [user, loading, error] = useAuthState(auth);
+    console.log(user);
+    console.log(error);
+
+    return (
+        <div className="App">
+            {loading && <div className="loading-spinner"></div>}
+            {!loading && !user &&
+                <>
+                    {error && <p>Error: {error.message}</p>}
+                    <TabList>
+                        <SignIn key="SignIn"/>
+                        <SignUp key="SignUp"/>
+                    </TabList>
+                </>
+            }
+            {!loading && !error && user && <SignedInApp user={user}/>}
+        </div>
+    )
+}
+
+function SignIn() {
+    const [signInWithEmailAndPassword, user1, loading1, error1] = useSignInWithEmailAndPassword(auth);
+    const [signInWithGoogle, user2, loading2, error2] = useSignInWithGoogle(auth);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    return (
+        <div className="App">
+            {(user1 || user2) && <div>Unexpectedly signed in already</div>}
+            {(loading1 || loading2) && <div className="loading-spinner"></div>}
+            {(!loading1 && !loading2) &&
+                <>
+                    {error1 && <h1>"Error logging in: " {error1.message}</h1>}
+                    {error2 && <h1>"Error logging in: " {error2.message}</h1>}
+                    <label htmlFor="email">Email:</label>
+                    <input type="text" id="email" value={email}
+                    onChange={e => setEmail(e.target.value)}/>
+                    <br/>
+                    <label htmlFor="password">Password: </label>
+                    <input type="text" id="password" value={password}
+                        onChange = {e =>setPassword(e.target.value)}/>
+                    <br/>
+                    <button onClick={() =>signInWithEmailAndPassword(email, password)}>
+                        Sign in with Email/Password
+                    </button>
+                    <hr/>
+                    <button onClick={() => signInWithGoogle()}>
+                        Sign in with Google
+                    </button>
+                </>
+            }
+        </div>
+    );
+}
+
+function SignUp() {
+    const [createUserWithEmailAndPassword, userCredential, loading, error] = useCreateUserWithEmailAndPassword(auth);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    return (
+        <div className="App">
+            {userCredential && <div>Unexpectedly signed in already</div>}
+            {loading && <div className="loading-spinner"></div>}
+            {(!loading) &&
+                <>
+                    {error && <p>"Error signing up: " {error.message}</p>}
+                    <label htmlFor="email">Email</label>
+                    <input type="text" id="email" value={email}
+                        onChange={e => setEmail(e.target.value)}/>
+                    <br/>
+                    <label htmlFor="Password">Password:</label>
+                    <input type="text" id="Password" value={password}
+                        onChange={e => setPassword(e.target.value)}/>
+                    <br/>
+                    <button onClick={() =>
+                        createUserWithEmailAndPassword(email, password)}>
+                        Create User
+                    </button>
+                </>
+            }
+        </div>
+    );
+}
+
+function SignedInApp(props) {
     // Sort order for list items
     const [sortState, setSortState] = useState(SortBy.Created_ASC);
     const sortArr = sortState.split("_");
@@ -440,6 +540,12 @@ function App() {
         setUndoStack(newStack);
     }
 
+    // Auth email verification
+    const verifyEmail = () => {
+        sendEmailVerification(props.user);
+        console.log("Sending email verification");
+    }
+
     return (
         <div className="App">
             {(listsLoading || itemsLoading) && <div className="loading-spinner"></div>}
@@ -450,7 +556,7 @@ function App() {
                     <div className="todo-text todo-title">
                         <div className="todo-list-dropdown-container">
                             <div className="todo-list-dropdown">
-                                <span class="todo-list-dropdown-label">To-Do:</span>
+                                <span className="todo-list-dropdown-label">To-Do:</span>
                                 <Dropdown
                                     selectClass={"main-list-select-mui"}
                                     dropdownWidth={200}
@@ -492,6 +598,8 @@ function App() {
                                     </IconContext.Provider>
                                 </button>
                             }
+                            {!props.user.emailVerified && <button type="button" onClick={verifyEmail}>Verify Email</button>}
+                            <button type="button" onClick={() => signOut(auth)}>Sign Out</button>
                         </div>
                     </div>
                     {/* Container for show and sort dropdowns */}

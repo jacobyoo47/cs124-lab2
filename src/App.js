@@ -39,9 +39,6 @@ const db = getFirestore(firebaseApp);
 const auth = getAuth();
 const collectionName = "Lists";
 const subcollectionName = "Items";
-// Eventually will change once we add functionality for multiple users
-// For now, have one global user for all list items
-const userId = "user";
 
 // Enum for mode of which list items to show
 const ShowState = {
@@ -104,8 +101,6 @@ const UndoOp = {
 
 function App() {
     const [user, loading, error] = useAuthState(auth);
-    console.log(user);
-    console.log(error);
 
     return (
         <div className="App">
@@ -179,8 +174,9 @@ function SignUp() {
                     <input type="text" id="Password" value={password}
                         onChange={e => setPassword(e.target.value)}/>
                     <br/>
-                    <button onClick={() =>
-                        createUserWithEmailAndPassword(email, password)}>
+                    <button onClick={() => {
+                        createUserWithEmailAndPassword(email, password);
+                    }}>
                         Create User
                     </button>
                 </>
@@ -198,7 +194,7 @@ function SignedInApp(props) {
     const sortOrder = sortArr[1].toLowerCase();
 
     // Firestore query states
-    const listsQuery = query(collection(db, collectionName), where("userId", "==", userId));
+    const listsQuery = query(collection(db, collectionName), where("userId", "==", props.user.uid));
     const [listsData, listsLoading, listsError] = useCollectionData(listsQuery);
 
     // Need listId to query tasks of that list, but want to display listName
@@ -216,9 +212,18 @@ function SignedInApp(props) {
     // Set listId and listName to first list after lists data has loaded
     useEffect(() => {
         if (!listInfo.listId) {
+            // Create a default list for new user since new user has no lists
+            if (listsData && !listsData.length) {
+                const id = generateUniqueID();
+                setDoc(doc(db, collectionName, id), {
+                    listId: id,
+                    listName: "My First List",
+                    userId: props.user.uid,
+                });
+            }
             setListInfo({
-                listId: listsData ? listsData[0].listId : null,
-                listName: listsData ? listsData[0].listName : null,
+                listId: (listsData && listsData.length) ? listsData[0].listId : null,
+                listName: (listsData && listsData.length) ? listsData[0].listName : null,
             });
         }
     }, [listsData, listInfo.listId]);
@@ -360,7 +365,7 @@ function SignedInApp(props) {
         setDoc(doc(db, collectionName, id), {
             listId: id,
             listName: name,
-            userId: userId,
+            userId: props.user.uid,
         });
 
         // Update state to be on newly added list
@@ -371,48 +376,26 @@ function SignedInApp(props) {
     }
 
     // Edit list name
-    const onEditList = (oldId, oldName, newName) => {
-        const id = generateUniqueID();
-
+    const onEditList = (oldName, newName) => {
         pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Edit,
-            oldListId: oldId,
+            oldListId: listInfo.listId,
             oldListName: oldName,
-            newListId: id,
+            newListId: listInfo.listId,
             newListName: newName,
             data: itemsData,
         });
 
-        const batch = writeBatch(db);
-
-        // Delete old list
-        batch.delete(doc(db, collectionName, oldId));
-
-        // Add new list
-        batch.set(doc(db, collectionName, id), {
-            listId: id,
+        // Update list name
+        updateDoc(doc(db, collectionName, listInfo.listId), {
             listName: newName,
-            userId: userId,
-        });
-
-        // Add back all items under new list name
-        itemsData.forEach((item) => {
-            batch.set(doc(db, `${collectionName}/${id}/${subcollectionName}`, item.id), {
-               id: item.id,
-               text: item.text,
-               completed: item.completed,
-               priority: item.priority,
-               created: item.created,
-            });
-        });
-
-        batch.commit();
+         });
 
         // Update state to be on newly edited list
         setListInfo({
             listName: newName,
-            listId: id,
+            listId: listInfo.listId,
         });
     }
 
@@ -469,7 +452,7 @@ function SignedInApp(props) {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
                 });
-            })
+            });
         } else { // Undo operation on a list
             if (undo.op === UndoOp.Add) {
                 // Delete list
@@ -486,7 +469,7 @@ function SignedInApp(props) {
                 batch.set(doc(db, collectionName, undo.oldListId), {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
-                    userId: userId,
+                    userId: props.user.uid,
                 });
 
                 // Add back all items under new list name
@@ -512,7 +495,7 @@ function SignedInApp(props) {
                 batch.set(doc(db, collectionName, undo.oldListId), {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
-                    userId: userId,
+                    userId: props.user.uid,
                 });
 
                 // Add back all items under old list name
@@ -543,7 +526,6 @@ function SignedInApp(props) {
     // Auth email verification
     const verifyEmail = () => {
         sendEmailVerification(props.user);
-        console.log("Sending email verification");
     }
 
     return (
@@ -708,7 +690,7 @@ function SignedInApp(props) {
                                 setShowEditListModal(false);
                             }}
                             onConfirm={(name) => {
-                                onEditList(listInfo.listId, listInfo.listName, name);
+                                onEditList(listInfo.listName, name);
                                 setShowEditListModal(false);
                             }}
                         />

@@ -1,6 +1,6 @@
 import './App.css';
 import { useState, useEffect } from 'react';
-import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList } from 'react-icons/fa';
+import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList, FaShareSquare } from 'react-icons/fa';
 import { IconContext } from 'react-icons';
 import Dropdown from './Dropdown';
 import ListItem from './ListItem';
@@ -24,6 +24,7 @@ import {
     signOut
 } from "firebase/auth";
 import TabList from './TabList';
+import ShareModal from './ShareModal';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -196,16 +197,28 @@ function SignedInApp(props) {
     // Firestore query states
     const listsQuery = query(collection(db, collectionName), where("userId", "==", props.user.uid));
     const [listsData, listsLoading, listsError] = useCollectionData(listsQuery);
+    const sharedListsQuery = query(collection(db, collectionName), where("sharedWith", "array-contains", props.user.emailVerified ? props.user.email : "NON_EXISTENT_EMAIL"));
+    const [sharedListsData, sharedListsLoading, sharedListsError] = useCollectionData(sharedListsQuery);
+    // TODO: utilize sharedListsData and somehow show to the user the shared lists (should be able to tell they are shared and not owned)
+    // Shared lists cannot be deleted but can be renamed and items can be added/edited/deleted
 
     // Need listId to query tasks of that list, but want to display listName
     const [listInfo, setListInfo] = useState({
         listId: null,
-        listInfo: null,
+        listName: null,
+        sharedWith: null,
     });
     const listNameToId = (name) => {
         for (const list of listsData) {
             if (list.listName === name) {
                 return list.listId;
+            }
+        }
+    }
+    const listNameToSharedWith = (name) => {
+        for (const list of listsData) {
+            if (list.listName === name) {
+                return list.sharedWith;
             }
         }
     }
@@ -219,11 +232,13 @@ function SignedInApp(props) {
                     listId: id,
                     listName: "My First List",
                     userId: props.user.uid,
+                    sharedWith: [],
                 });
             }
             setListInfo({
                 listId: (listsData && listsData.length) ? listsData[0].listId : null,
                 listName: (listsData && listsData.length) ? listsData[0].listName : null,
+                sharedWith: (listsData && listsData.length) ? listsData[0].sharedWith : null,
             });
         }
     }, [listsData, listInfo.listId]);
@@ -233,6 +248,7 @@ function SignedInApp(props) {
                 return {
                     listId: list2.listId,
                     listName: list2.listName,
+                    sharedWith: list2.sharedWith,
                 };
             }
         }
@@ -268,6 +284,7 @@ function SignedInApp(props) {
     const [showAddListModal, setShowAddListModal] = useState(false);
     const [showEditListModal, setShowEditListModal] = useState(false);
     const [showDeleteListModal, setShowDeleteListModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
 
     // Add item
     const onAddItem = (text, priority) => {
@@ -276,8 +293,10 @@ function SignedInApp(props) {
             op: UndoOp.Add,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
             data: itemsData,
         });
 
@@ -298,8 +317,10 @@ function SignedInApp(props) {
             op: UndoOp.Edit,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
             data: itemsData
         });
 
@@ -317,8 +338,10 @@ function SignedInApp(props) {
             op: UndoOp.Delete,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
             data: itemsData
         });
 
@@ -332,8 +355,10 @@ function SignedInApp(props) {
             op: UndoOp.Delete,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
             data: itemsData
         });
 
@@ -357,8 +382,10 @@ function SignedInApp(props) {
             op: UndoOp.Add,
             oldListId: null,
             oldListName: null,
+            oldSharedWith: null,
             newListId: id,
             newList: name,
+            newSharedWith: [],
             data: [],
         });
 
@@ -366,24 +393,28 @@ function SignedInApp(props) {
             listId: id,
             listName: name,
             userId: props.user.uid,
+            sharedWith: [],
         });
 
         // Update state to be on newly added list
         setListInfo({
             listName: name,
             listId: id,
+            sharedWith: [],
         });
     }
 
     // Edit list name
-    const onEditList = (oldName, newName) => {
+    const onEditListName = (oldName, newName) => {
         pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Edit,
             oldListId: listInfo.listId,
             oldListName: oldName,
+            oldSharedWith: listInfo.sharedWith,
             newListId: listInfo.listId,
             newListName: newName,
+            newSharedWith: listInfo.sharedWith,
             data: itemsData,
         });
 
@@ -396,18 +427,21 @@ function SignedInApp(props) {
         setListInfo({
             listName: newName,
             listId: listInfo.listId,
+            sharedWith: listInfo.sharedWith,
         });
     }
 
     // Delete list
-    const onDeleteList = (id, name) => {
+    const onDeleteList = (id, name, sharedWith) => {
         pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Delete,
             oldListId: id,
             oldListName: name,
+            oldSharedWith: sharedWith,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
             data: itemsData,
         });
 
@@ -417,8 +451,36 @@ function SignedInApp(props) {
         const newListInfo = firstDifferentList({
             listId: id,
             listName: name,
+            sharedWith: sharedWith,
         })
         setListInfo(newListInfo);
+    }
+
+    // Add/delete email to/from sharedWith attribute of list
+    const onEditSharedEmails = (newSharedWith) => {
+        pushUndoStack({
+            type: UndoType.List,
+            op: UndoOp.Edit,
+            oldListId: listInfo.listId,
+            oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
+            newListId: listInfo.listId,
+            newListName: listInfo.listName,
+            newSharedWith: newSharedWith,
+            data: itemsData,
+        });
+
+        // Update list sharedWith
+        updateDoc(doc(db, collectionName, listInfo.listId), {
+            sharedWith: newSharedWith,
+         });
+
+        // Update state to be on newly edited list
+        setListInfo({
+            listName: listInfo.listName,
+            listId: listInfo.listId,
+            sharedWith: newSharedWith,
+        });
     }
 
     // Undo operation so data is brought to previous state
@@ -451,6 +513,7 @@ function SignedInApp(props) {
                 setListInfo({
                     listId: undo.oldListId,
                     listName: undo.oldListName,
+                    sharedWith: undo.oldSharedWith,
                 });
             });
         } else { // Undo operation on a list
@@ -462,6 +525,7 @@ function SignedInApp(props) {
                 const newListInfo = firstDifferentList({
                     listId: undo.newListId,
                     listName: undo.newListName,
+                    sharedWith: undo.newSharedWith,
                 })
                 setListInfo(newListInfo);
             } else if (undo.op === UndoOp.Delete) {
@@ -470,6 +534,7 @@ function SignedInApp(props) {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
                     userId: props.user.uid,
+                    sharedWith: undo.oldSharedWith,
                 });
 
                 // Add back all items under new list name
@@ -486,38 +551,23 @@ function SignedInApp(props) {
                 setListInfo({
                     listId: undo.oldListId,
                     listName: undo.oldListName,
+                    sharedWith: undo.oldSharedWith,
                 });
             } else {
-                // Delete new list
-                batch.delete(doc(db, collectionName, undo.newListId));
-
-                // Add back old list
-                batch.set(doc(db, collectionName, undo.oldListId), {
-                    listId: undo.oldListId,
+                // Revert back to old list name
+                batch.update(doc(db, collectionName, undo.oldListId), {
                     listName: undo.oldListName,
-                    userId: props.user.uid,
-                });
-
-                // Add back all items under old list name
-                undo.data.forEach((item) => {
-                    batch.set(doc(db, `${collectionName}/${undo.oldListId}/${subcollectionName}`, item.id), {
-                        id: item.id,
-                        text: item.text,
-                        completed: item.completed,
-                        priority: item.priority,
-                        created: item.created,
-                    });
                 });
 
                 setListInfo({
                     listId: undo.oldListId,
                     listName: undo.oldListName,
+                    sharedWith: undo.oldSharedWith,
                 });
             }
 
             batch.commit();
         }
-
 
         // Update the undoStack
         setUndoStack(newStack);
@@ -530,9 +580,11 @@ function SignedInApp(props) {
 
     return (
         <div className="App">
-            {(listsLoading || itemsLoading) && <div className="loading-spinner"></div>}
-            {(listsError || itemsError) && <h1 className="empty-placeholder">Error occurred while trying to fetch data. Please try again later.</h1>}
-            {!listsLoading && !itemsLoading && !listsError && !itemsError &&
+            {(listsLoading || sharedListsLoading || itemsLoading) && <div className="loading-spinner"></div>}
+            {listsError && <h1 className="empty-placeholder">"Error fetching data: " {listsError.message}</h1>}
+            {sharedListsError && <h1 className="empty-placeholder">"Error fetching data: " {sharedListsError.message}</h1>}
+            {itemsError && <h1 className="empty-placeholder">"Error fetching data: " {itemsError.message}</h1>}
+            {!listsLoading && !sharedListsLoading && !itemsLoading && !listsError && !sharedListsError && !itemsError &&
                 <>
                     {/* Top title bar with list changing buttons/dropdown */}
                     <div className="todo-text todo-title">
@@ -547,6 +599,7 @@ function SignedInApp(props) {
                                         setListInfo({
                                             listId: listNameToId(val),
                                             listName: val,
+                                            sharedWith: listNameToSharedWith(val),
                                         });
                                     }}
                                     menuState={listInfo.listName}
@@ -582,6 +635,13 @@ function SignedInApp(props) {
                             }
                             {!props.user.emailVerified && <button type="button" onClick={verifyEmail}>Verify Email</button>}
                             <button type="button" onClick={() => signOut(auth)}>Sign Out</button>
+                            <button className="todo-icon todo-list-dropdown-button" aria-label={`edit shared people that can edit list named ${listInfo.listName}`} onClick={() => {
+                                setShowShareModal(true);
+                            }}>
+                                <IconContext.Provider value={{ size: '27px' }}>
+                                    <FaShareSquare />
+                                </IconContext.Provider>
+                            </button>
                         </div>
                     </div>
                     {/* Container for show and sort dropdowns */}
@@ -690,7 +750,7 @@ function SignedInApp(props) {
                                 setShowEditListModal(false);
                             }}
                             onConfirm={(name) => {
-                                onEditList(listInfo.listName, name);
+                                onEditListName(listInfo.listName, name);
                                 setShowEditListModal(false);
                             }}
                         />
@@ -703,8 +763,22 @@ function SignedInApp(props) {
                                 setShowDeleteListModal(false);
                             }}
                             onConfirm={() => {
-                                onDeleteList(listInfo.listId, listInfo.listName);
+                                onDeleteList(listInfo.listId, listInfo.listName, listInfo.sharedWith);
                                 setShowDeleteListModal(false);
+                            }}
+                        />
+                    }
+                    {showShareModal &&
+                        <ShareModal
+                            title={`Share List "${listInfo.listName}"`}
+                            sharedWith={listInfo.sharedWith}
+                            onCancel={() => {
+                                setShowShareModal(false);
+                            }}
+                            onConfirm={(email) => {
+                                const newSharedWith = listInfo.sharedWith.concat([email]);
+                                onEditSharedEmails(newSharedWith);
+                                setShowShareModal(false);
                             }}
                         />
                     }

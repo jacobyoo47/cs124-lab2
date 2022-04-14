@@ -633,8 +633,6 @@ function SignedInApp(props) {
                                     </IconContext.Provider>
                                 </button>
                             }
-                            {!props.user.emailVerified && <button type="button" onClick={verifyEmail}>Verify Email</button>}
-                            <button type="button" onClick={() => signOut(auth)}>Sign Out</button>
                             <button className="todo-icon todo-list-dropdown-button" aria-label={`edit shared people that can edit list named ${listInfo.listName}`} onClick={() => {
                                 setShowShareModal(true);
                             }}>
@@ -642,6 +640,9 @@ function SignedInApp(props) {
                                     <FaShareSquare />
                                 </IconContext.Provider>
                             </button>
+                            {!props.user.emailVerified && <button type="button" onClick={verifyEmail}>Verify Email</button>}
+                            <button type="button" onClick={() => signOut(auth)}>Sign Out</button>
+
                         </div>
                     </div>
                     {/* Container for show and sort dropdowns */}

@@ -2,9 +2,10 @@ import Modal from "./Modal";
 import {useState} from 'react';
 import FormControl from '@mui/material/FormControl';
 import TextField from '@mui/material/TextField';
+import SharedEmailItem from './SharedEmailItem';
 
 function ShareModal(props) {
-    const [email, setEmail] = useState(props.name);
+    const [email, setEmail] = useState("");
 
     return (
         <Modal
@@ -21,7 +22,16 @@ function ShareModal(props) {
             <>
                 <div>Currently shared with the following emails:</div>
                 {!props.sharedWith.length && <div>None</div>}
-                {props.sharedWith.map(email => <div>{email}</div>)}
+                {props.sharedWith.map(email =>
+                    <SharedEmailItem
+                        email={email}
+                        list={props.list}
+                        key={email}
+                        onDeleteItem={(email) => {
+                            props.onDeleteItem(email);
+                        }}
+                    />
+                )}
                 <br></br>
                 <div>Share additional email:</div>
                 <FormControl variant="standard" sx={{ m: 1, width: 200, paddingBottom: 1 }}>

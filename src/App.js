@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList, FaShareSquare } from 'react-icons/fa';
 import { IconContext } from 'react-icons';
 import Dropdown from './Dropdown';
+import GroupedDropdown from './GroupedDropdown';
 import ListItem from './ListItem';
 import AddEditItemModal from './AddEditItemModal';
 import AddEditListModal from './AddEditListModal';
@@ -135,12 +136,20 @@ function SignIn() {
                     {error1 && <h1>"Error logging in: " {error1.message}</h1>}
                     {error2 && <h1>"Error logging in: " {error2.message}</h1>}
                     <label htmlFor="email">Email:</label>
-                    <input type="text" id="email" value={email}
-                    onChange={e => setEmail(e.target.value)}/>
+                    <input
+                        type="text"
+                        id="email"
+                        value={email}
+                        onChange={e => setEmail(e.target.value)}
+                    />
                     <br/>
                     <label htmlFor="password">Password: </label>
-                    <input type="text" id="password" value={password}
-                        onChange = {e =>setPassword(e.target.value)}/>
+                    <input
+                        type="text"
+                        id="password"
+                        value={password}
+                        onChange = {e =>setPassword(e.target.value)}
+                    />
                     <br/>
                     <button onClick={() =>signInWithEmailAndPassword(email, password)}>
                         Sign in with Email/Password
@@ -199,26 +208,23 @@ function SignedInApp(props) {
     const [listsData, listsLoading, listsError] = useCollectionData(listsQuery);
     const sharedListsQuery = query(collection(db, collectionName), where("sharedWith", "array-contains", props.user.emailVerified ? props.user.email : "NON_EXISTENT_EMAIL"));
     const [sharedListsData, sharedListsLoading, sharedListsError] = useCollectionData(sharedListsQuery);
-    // TODO: utilize sharedListsData and somehow show to the user the shared lists (should be able to tell they are shared and not owned)
-    // Shared lists cannot be deleted but can be renamed and items can be added/edited/deleted
 
     // Need listId to query tasks of that list, but want to display listName
     const [listInfo, setListInfo] = useState({
         listId: null,
         listName: null,
         sharedWith: null,
+        userId: null,
     });
-    const listNameToId = (name) => {
+    const listIdToListInfo = (id) => {
         for (const list of listsData) {
-            if (list.listName === name) {
-                return list.listId;
+            if (list.listId === id) {
+                return list;
             }
         }
-    }
-    const listNameToSharedWith = (name) => {
-        for (const list of listsData) {
-            if (list.listName === name) {
-                return list.sharedWith;
+        for (const list of sharedListsData) {
+            if (list.listId === id) {
+                return list;
             }
         }
     }
@@ -231,24 +237,33 @@ function SignedInApp(props) {
                 setDoc(doc(db, collectionName, id), {
                     listId: id,
                     listName: "My First List",
-                    userId: props.user.uid,
                     sharedWith: [],
+                    userId: props.user.uid,
+                    userEmail: props.user.email,
+                    userName: props.user.displayName,
                 });
             }
             setListInfo({
                 listId: (listsData && listsData.length) ? listsData[0].listId : null,
                 listName: (listsData && listsData.length) ? listsData[0].listName : null,
                 sharedWith: (listsData && listsData.length) ? listsData[0].sharedWith : null,
+                userId: (listsData && listsData.length) ? listsData[0].userId : null,
+                userEmail: (listsData && listsData.length) ? listsData[0].userEmail : null,
+                userName: (listsData && listsData.length) ? listsData[0].userName : null,
+
             });
         }
-    }, [listsData, listInfo.listId]);
-    const firstDifferentList = (list) => {
+    }, [listsData, listInfo.listId, props.user.uid, props.user.email, props.user.displayName]);
+    const firstDifferentList = (id) => {
         for (const list2 of listsData) {
-            if (list.listId !== list2.listId) {
+            if (id !== list2.listId) {
                 return {
                     listId: list2.listId,
                     listName: list2.listName,
                     sharedWith: list2.sharedWith,
+                    userId: list2.userId,
+                    userEmail: list2.userEmail,
+                    userName: list2.userName,
                 };
             }
         }
@@ -294,9 +309,15 @@ function SignedInApp(props) {
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
             oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
             newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData,
         });
 
@@ -318,9 +339,15 @@ function SignedInApp(props) {
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
             oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
             newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData
         });
 
@@ -339,9 +366,15 @@ function SignedInApp(props) {
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
             oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
             newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData
         });
 
@@ -356,9 +389,15 @@ function SignedInApp(props) {
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
             oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
             newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData
         });
 
@@ -383,9 +422,15 @@ function SignedInApp(props) {
             oldListId: null,
             oldListName: null,
             oldSharedWith: null,
+            oldUserId: null,
+            oldUserEmail: null,
+            oldUserName: null,
             newListId: id,
             newList: name,
             newSharedWith: [],
+            newUserId: props.user.uid,
+            newUserEmail: props.user.email,
+            newUserName: props.user.displayName,
             data: [],
         });
 
@@ -401,6 +446,7 @@ function SignedInApp(props) {
             listName: name,
             listId: id,
             sharedWith: [],
+            userId: props.user.uid,
         });
     }
 
@@ -412,9 +458,15 @@ function SignedInApp(props) {
             oldListId: listInfo.listId,
             oldListName: oldName,
             oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: listInfo.listId,
             newListName: newName,
             newSharedWith: listInfo.sharedWith,
+            newUserId: listInfo.userId,
+            newUserEmail: listInfo.userEmail,
+            newUserName: listInfo.userName,
             data: itemsData,
         });
 
@@ -428,32 +480,36 @@ function SignedInApp(props) {
             listName: newName,
             listId: listInfo.listId,
             sharedWith: listInfo.sharedWith,
+            userId: listInfo.userId,
+            userEmail: listInfo.userEmail,
+            userName: listInfo.userName,
         });
     }
 
     // Delete list
-    const onDeleteList = (id, name, sharedWith) => {
+    const onDeleteList = (id, name, sharedWith, userId, userEmail, userName) => {
         pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Delete,
             oldListId: id,
             oldListName: name,
             oldSharedWith: sharedWith,
+            oldUserId: userId,
+            oldUserEmail: userEmail,
+            oldUserName: userName,
             newListId: null,
             newListName: null,
             newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData,
         });
 
         deleteDoc(doc(db, collectionName, id));
 
         // Update state since current subcollection list no longer exists
-        const newListInfo = firstDifferentList({
-            listId: id,
-            listName: name,
-            sharedWith: sharedWith,
-        })
-        setListInfo(newListInfo);
+        setListInfo(firstDifferentList(id));
     }
 
     // Add/delete email to/from sharedWith attribute of list
@@ -464,9 +520,15 @@ function SignedInApp(props) {
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
             oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: listInfo.listId,
             newListName: listInfo.listName,
             newSharedWith: newSharedWith,
+            newUserId: listInfo.userId,
+            newUserEmail: listInfo.userEmail,
+            newUserName: listInfo.userName,
             data: itemsData,
         });
 
@@ -480,6 +542,9 @@ function SignedInApp(props) {
             listName: listInfo.listName,
             listId: listInfo.listId,
             sharedWith: newSharedWith,
+            userId: listInfo.userId,
+            userEmail: listInfo.userEmail,
+            userName: listInfo.userName,
         });
     }
 
@@ -514,6 +579,9 @@ function SignedInApp(props) {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
                     sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
             });
         } else { // Undo operation on a list
@@ -522,19 +590,16 @@ function SignedInApp(props) {
                 batch.delete(doc(db, collectionName, undo.newListId));
 
                 // Update state since current subcollection list no longer exists
-                const newListInfo = firstDifferentList({
-                    listId: undo.newListId,
-                    listName: undo.newListName,
-                    sharedWith: undo.newSharedWith,
-                })
-                setListInfo(newListInfo);
+                setListInfo(firstDifferentList(undo.newListId));
             } else if (undo.op === UndoOp.Delete) {
                 // Add back list
                 batch.set(doc(db, collectionName, undo.oldListId), {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
-                    userId: props.user.uid,
                     sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
 
                 // Add back all items under new list name
@@ -552,6 +617,9 @@ function SignedInApp(props) {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
                     sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
             } else {
                 // Revert back to old list name
@@ -563,6 +631,9 @@ function SignedInApp(props) {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
                     sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
             }
 
@@ -591,22 +662,20 @@ function SignedInApp(props) {
                         <div className="todo-list-dropdown-container">
                             <div className="todo-list-dropdown">
                                 <span className="todo-list-dropdown-label">To-Do:</span>
-                                <Dropdown
+                                <GroupedDropdown
                                     selectClass={"main-list-select-mui"}
                                     dropdownWidth={200}
                                     menuLabel=""
                                     onSelectItem={(val) => {
-                                        setListInfo({
-                                            listId: listNameToId(val),
-                                            listName: val,
-                                            sharedWith: listNameToSharedWith(val),
-                                        });
+                                        setListInfo(listIdToListInfo(val));
                                     }}
-                                    menuState={listInfo.listName}
-                                    options={listsData.map(list => list.listName)}
+                                    menuState={listInfo.listId}
+                                    data1={listsData}
+                                    data2={sharedListsData}
                                     menuName="Lists"
                                 />
                             </div>
+                            <div className="owner-text">{`Owner: ${listInfo.userEmail}`}</div>
                         </div>
                         <div className="todo-list-dropdown-buttons-container">
                             <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-add" aria-label="add list" onClick={() => {
@@ -624,7 +693,7 @@ function SignedInApp(props) {
                                     <FaEdit />
                                 </IconContext.Provider>
                             </button>
-                            {listsData.length > 1 &&
+                            {listsData.length > 1 && props.user.uid === listInfo.userId &&
                                 <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${listInfo.listName}`} onClick={() => {
                                     setShowDeleteListModal(true);
                                 }}>
@@ -633,16 +702,17 @@ function SignedInApp(props) {
                                     </IconContext.Provider>
                                 </button>
                             }
-                            <button className="todo-icon todo-list-dropdown-button" aria-label={`edit shared people that can edit list named ${listInfo.listName}`} onClick={() => {
-                                setShowShareModal(true);
-                            }}>
-                                <IconContext.Provider value={{ size: '27px' }}>
-                                    <FaShareSquare />
-                                </IconContext.Provider>
-                            </button>
+                            {props.user.uid === listInfo.userId &&
+                                <button className="todo-icon todo-list-dropdown-button" aria-label={`edit shared people that can edit list named ${listInfo.listName}`} onClick={() => {
+                                    setShowShareModal(true);
+                                }}>
+                                    <IconContext.Provider value={{ size: '27px' }}>
+                                        <FaShareSquare />
+                                    </IconContext.Provider>
+                                </button>
+                            }
                             {!props.user.emailVerified && <button type="button" onClick={verifyEmail}>Verify Email</button>}
                             <button type="button" onClick={() => signOut(auth)}>Sign Out</button>
-
                         </div>
                     </div>
                     {/* Container for show and sort dropdowns */}
@@ -764,7 +834,7 @@ function SignedInApp(props) {
                                 setShowDeleteListModal(false);
                             }}
                             onConfirm={() => {
-                                onDeleteList(listInfo.listId, listInfo.listName, listInfo.sharedWith);
+                                onDeleteList(listInfo.listId, listInfo.listName, listInfo.sharedWith, listInfo.userId, listInfo.userEmail, listInfo.userName);
                                 setShowDeleteListModal(false);
                             }}
                         />
@@ -772,6 +842,7 @@ function SignedInApp(props) {
                     {showShareModal &&
                         <ShareModal
                             title={`Share List "${listInfo.listName}"`}
+                            list={listInfo.listName}
                             sharedWith={listInfo.sharedWith}
                             onCancel={() => {
                                 setShowShareModal(false);
@@ -780,6 +851,10 @@ function SignedInApp(props) {
                                 const newSharedWith = listInfo.sharedWith.concat([email]);
                                 onEditSharedEmails(newSharedWith);
                                 setShowShareModal(false);
+                            }}
+                            onDeleteItem={(email) => {
+                                const newSharedWith = listInfo.sharedWith.filter(e => e !== email);
+                                onEditSharedEmails(newSharedWith);
                             }}
                         />
                     }

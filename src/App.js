@@ -21,7 +21,6 @@ import {
 } from 'react-firebase-hooks/auth';
 import {
     getAuth,
-    sendEmailVerification,
     signOut
 } from "firebase/auth";
 import TabList from './TabList';
@@ -206,8 +205,11 @@ function SignedInApp(props) {
     // Firestore query states
     const listsQuery = query(collection(db, collectionName), where("userId", "==", props.user.uid));
     const [listsData, listsLoading, listsError] = useCollectionData(listsQuery);
-    const sharedListsQuery = query(collection(db, collectionName), where("sharedWith", "array-contains", props.user.emailVerified ? props.user.email : "NON_EXISTENT_EMAIL"));
+    console.log("listsError:", listsError);
+    const sharedListsQuery = query(collection(db, collectionName), where("sharedWith", "array-contains", props.user.email));
     const [sharedListsData, sharedListsLoading, sharedListsError] = useCollectionData(sharedListsQuery);
+    console.log("sharedListsError:", sharedListsError);
+
 
     // Need listId to query tasks of that list, but want to display listName
     const [listInfo, setListInfo] = useState({
@@ -215,6 +217,8 @@ function SignedInApp(props) {
         listName: null,
         sharedWith: null,
         userId: null,
+        userEmail: null,
+        userName: null,
     });
     const listIdToListInfo = (id) => {
         for (const list of listsData) {
@@ -250,7 +254,6 @@ function SignedInApp(props) {
                 userId: (listsData && listsData.length) ? listsData[0].userId : null,
                 userEmail: (listsData && listsData.length) ? listsData[0].userEmail : null,
                 userName: (listsData && listsData.length) ? listsData[0].userName : null,
-
             });
         }
     }, [listsData, listInfo.listId, props.user.uid, props.user.email, props.user.displayName]);
@@ -271,6 +274,8 @@ function SignedInApp(props) {
 
     const itemsQuery = query(collection(db, `${collectionName}/${listInfo.listId}/${subcollectionName}`), orderBy(sortField, sortOrder));
     const [itemsData, itemsLoading, itemsError] = useCollectionData(itemsQuery);
+    console.log("itemsError:", itemsError);
+
 
     // Allow user to undo recent add/edit/delete operations
     const [undoStack, setUndoStack] = useState([]);
@@ -438,6 +443,8 @@ function SignedInApp(props) {
             listId: id,
             listName: name,
             userId: props.user.uid,
+            userEmail: props.user.email,
+            userName: props.user.displayName,
             sharedWith: [],
         });
 
@@ -447,6 +454,8 @@ function SignedInApp(props) {
             listId: id,
             sharedWith: [],
             userId: props.user.uid,
+            userEmail: props.user.email,
+            userName: props.user.displayName,
         });
     }
 
@@ -644,11 +653,6 @@ function SignedInApp(props) {
         setUndoStack(newStack);
     }
 
-    // Auth email verification
-    const verifyEmail = () => {
-        sendEmailVerification(props.user);
-    }
-
     return (
         <div className="App">
             {(listsLoading || sharedListsLoading || itemsLoading) && <div className="loading-spinner"></div>}
@@ -711,7 +715,6 @@ function SignedInApp(props) {
                                     </IconContext.Provider>
                                 </button>
                             }
-                            {!props.user.emailVerified && <button type="button" onClick={verifyEmail}>Verify Email</button>}
                             <button type="button" onClick={() => signOut(auth)}>Sign Out</button>
                         </div>
                     </div>

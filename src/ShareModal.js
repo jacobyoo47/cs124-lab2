@@ -19,7 +19,18 @@ function ShareModal(props) {
                 props.onConfirm(email);
             }}
         >
-            <>
+            <div className="modal-shared-email-list">
+                <div>Share additional email:</div>
+                <FormControl variant="standard" sx={{ m: 1, width: 200, paddingBottom: 1 }}>
+                    <TextField autoFocus id="email-input" label="email" variant="standard" value={email} onChange={(event) => {
+                            setEmail(event.target.value);
+                        }}
+                        onKeyDown={(event) => {
+                            if (event.key === "Enter") {
+                                props.onConfirm(email);
+                            }
+                    }}/>
+                </FormControl>
                 <div>Currently shared with the following emails:</div>
                 {!props.sharedWith.length && <div>None</div>}
                 {props.sharedWith.map(email =>
@@ -33,18 +44,8 @@ function ShareModal(props) {
                     />
                 )}
                 <br></br>
-                <div>Share additional email:</div>
-                <FormControl variant="standard" sx={{ m: 1, width: 200, paddingBottom: 1 }}>
-                    <TextField autoFocus id="email-input" label="email" variant="standard" value={email} onChange={(event) => {
-                            setEmail(event.target.value);
-                        }}
-                        onKeyDown={(event) => {
-                            if (event.key === "Enter") {
-                                props.onConfirm(email);
-                            }
-                    }}/>
-                </FormControl>
-            </>
+            </div>
+
 
         </Modal>
     )

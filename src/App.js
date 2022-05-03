@@ -26,7 +26,6 @@ import {
 import TabList from './TabList';
 import ShareModal from './ShareModal';
 import SignOutModal from './SignOutModal';
-import DisabledDropdown from './DisabledDropdown';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -745,15 +744,6 @@ function SignedInApp(props) {
                             options={SortByArr}
                             menuName="Sort"
                         />
-                        {/* <div className="owner-text">
-                            Owner:
-                            <div>{listInfo.userEmail}</div>
-                        </div> */}
-                        {/* <DisabledDropdown
-                            menuLabel="List Owner:"
-                            menuName="ListOwner"
-                            menuState={0}
-                        /> */}
                     </div>
                     {/* Container for list items */}
                     <div className="todo-list">

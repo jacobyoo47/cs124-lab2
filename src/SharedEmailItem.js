@@ -7,10 +7,10 @@ function SharedEmailItem(props) {
 
     return (
         <>
-            <div className={`todo-task`}>
-                <span className="todo-task-name">{`${props.email}`}</span>
-                <div className="todo-item-buttons-container">
-                    <button className="todo-delete-button" aria-label={`stop sharing list named "${props.list}" with ${props.email}`} onClick={() => {
+            <div className={`modal-email`}>
+                <span className="modal-email-name">{`${props.email}`}</span>
+                <div className="modal-shared-email-list-button-container">
+                    <button className="modal-email-delete-button" aria-label={`stop sharing list named "${props.list}" with ${props.email}`} onClick={() => {
                         setShowDeleteEmailModal(true);
                     }}>
                         <FaTrashAlt />

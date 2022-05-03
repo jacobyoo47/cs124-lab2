@@ -228,10 +228,8 @@ function SignedInApp(props) {
     // Firestore query states
     const listsQuery = query(collection(db, collectionName), where("userId", "==", props.user.uid));
     const [listsData, listsLoading, listsError] = useCollectionData(listsQuery);
-    console.log("listsError:", listsError);
     const sharedListsQuery = query(collection(db, collectionName), where("sharedWith", "array-contains", props.user.email));
     const [sharedListsData, sharedListsLoading, sharedListsError] = useCollectionData(sharedListsQuery);
-    console.log("sharedListsError:", sharedListsError);
 
 
     // Need listId to query tasks of that list, but want to display listName
@@ -297,7 +295,6 @@ function SignedInApp(props) {
 
     const itemsQuery = query(collection(db, `${collectionName}/${listInfo.listId}/${subcollectionName}`), orderBy(sortField, sortOrder));
     const [itemsData, itemsLoading, itemsError] = useCollectionData(itemsQuery);
-    console.log("itemsError:", itemsError);
 
 
     // Allow user to undo recent add/edit/delete operations

@@ -1,8 +1,9 @@
 import './App.css';
 import { useState, useEffect } from 'react';
-import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList } from 'react-icons/fa';
+import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList, FaShareSquare, FaSignOutAlt } from 'react-icons/fa';
 import { IconContext } from 'react-icons';
 import Dropdown from './Dropdown';
+import GroupedDropdown from './GroupedDropdown';
 import ListItem from './ListItem';
 import AddEditItemModal from './AddEditItemModal';
 import AddEditListModal from './AddEditListModal';
@@ -12,6 +13,21 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, getDocs, query, collection, doc, setDoc, updateDoc, deleteDoc, orderBy, where, serverTimestamp, writeBatch } from "firebase/firestore";
 import { useCollectionData } from "react-firebase-hooks/firestore";
 import { generateUniqueID } from "web-vitals/dist/modules/lib/generateUniqueID";
+import {
+    useAuthState,
+    useCreateUserWithEmailAndPassword,
+    useSignInWithEmailAndPassword,
+    useSignInWithGoogle
+} from 'react-firebase-hooks/auth';
+import {
+    getAuth,
+    signOut
+} from "firebase/auth";
+import TabList from './TabList';
+import ShareModal from './ShareModal';
+import SignOutModal from './SignOutModal';
+import FormControl from '@mui/material/FormControl';
+import TextField from '@mui/material/TextField';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -24,11 +40,9 @@ const firebaseConfig = {
 
 const firebaseApp = initializeApp(firebaseConfig);
 const db = getFirestore(firebaseApp);
+const auth = getAuth();
 const collectionName = "Lists";
 const subcollectionName = "Items";
-// Eventually will change once we add functionality for multiple users
-// For now, have one global user for all list items
-const userId = "user";
 
 // Enum for mode of which list items to show
 const ShowState = {
@@ -90,6 +104,120 @@ const UndoOp = {
 }
 
 function App() {
+    const [user, loading, error] = useAuthState(auth);
+
+    return (
+        <div className="App">
+            {loading && <div className="loading-spinner"></div>}
+            {!loading && !user &&
+                <>
+                    {error && <p>Error: {error.message}</p>}
+                    <TabList>
+                        <SignIn key="SignIn"/>
+                        <SignUp key="SignUp"/>
+                    </TabList>
+                </>
+            }
+            {!loading && !error && user && <SignedInApp user={user}/>}
+        </div>
+    )
+}
+
+function SignIn() {
+    const [signInWithEmailAndPassword, user1, loading1, error1] = useSignInWithEmailAndPassword(auth);
+    const [signInWithGoogle, user2, loading2, error2] = useSignInWithGoogle(auth);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    return (
+        <div className="tab-signin">
+            {(user1 || user2) && <div>Unexpectedly signed in already</div>}
+            {(loading1 || loading2) && <div className="loading-spinner"></div>}
+            {(!loading1 && !loading2) &&
+                <div className="tab-elements">
+                    {error1 && <h1>"Error logging in: " {error1.message}</h1>}
+                    {error2 && <h1>"Error logging in: " {error2.message}</h1>}
+
+                    <button className="tab-signin-with-google" onClick={() => signInWithGoogle()}>
+                        Sign in with Google
+                    </button>
+                    <br/>
+                    <h3>OR</h3>
+
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Email" variant="standard" value={email} onChange={(event) => {
+                                setEmail(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    signInWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Password" variant="standard" value={password} onChange={(event) => {
+                                setPassword(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    signInWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+
+                    <button className="tab-signin-with-email" onClick={() =>signInWithEmailAndPassword(email, password)}>
+                        Sign in with Email/Password
+                    </button>
+                </div>
+            }
+        </div>
+    );
+}
+
+function SignUp() {
+    const [createUserWithEmailAndPassword, userCredential, loading, error] = useCreateUserWithEmailAndPassword(auth);
+    const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
+
+    return (
+        <div className="">
+            {userCredential && <div>Unexpectedly signed in already</div>}
+            {loading && <div className="loading-spinner"></div>}
+            {(!loading) &&
+                <div className="tab-elements tab-signup">
+                    {error && <p>"Error signing up: " {error.message}</p>}
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Email" variant="standard" value={email} onChange={(event) => {
+                                setEmail(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    createUserWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Password" variant="standard" value={password} onChange={(event) => {
+                                setPassword(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    createUserWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+                    <button className="tab-signin-with-email" onClick={() => {
+                        createUserWithEmailAndPassword(email, password);
+                    }}>
+                        Create User
+                    </button>
+                </div>
+            }
+        </div>
+    );
+}
+
+function SignedInApp(props) {
     // Sort order for list items
     const [sortState, setSortState] = useState(SortBy.Created_ASC);
     const sortArr = sortState.split("_");
@@ -98,36 +226,68 @@ function App() {
     const sortOrder = sortArr[1].toLowerCase();
 
     // Firestore query states
-    const listsQuery = query(collection(db, collectionName), where("userId", "==", userId));
+    const listsQuery = query(collection(db, collectionName), where("userId", "==", props.user.uid));
     const [listsData, listsLoading, listsError] = useCollectionData(listsQuery);
+    const sharedListsQuery = query(collection(db, collectionName), where("sharedWith", "array-contains", props.user.email));
+    const [sharedListsData, sharedListsLoading, sharedListsError] = useCollectionData(sharedListsQuery);
+
 
     // Need listId to query tasks of that list, but want to display listName
     const [listInfo, setListInfo] = useState({
         listId: null,
-        listInfo: null,
+        listName: null,
+        sharedWith: null,
+        userId: null,
+        userEmail: null,
+        userName: null,
     });
-    const listNameToId = (name) => {
+    const listIdToListInfo = (id) => {
         for (const list of listsData) {
-            if (list.listName === name) {
-                return list.listId;
+            if (list.listId === id) {
+                return list;
+            }
+        }
+        for (const list of sharedListsData) {
+            if (list.listId === id) {
+                return list;
             }
         }
     }
     // Set listId and listName to first list after lists data has loaded
     useEffect(() => {
         if (!listInfo.listId) {
+            // Create a default list for new user since new user has no lists
+            if (listsData && !listsData.length) {
+                const id = generateUniqueID();
+                setDoc(doc(db, collectionName, id), {
+                    listId: id,
+                    listName: "My First List",
+                    sharedWith: [],
+                    userId: props.user.uid,
+                    userEmail: props.user.email,
+                    userName: props.user.displayName,
+                });
+            }
             setListInfo({
-                listId: listsData ? listsData[0].listId : null,
-                listName: listsData ? listsData[0].listName : null,
+                listId: (listsData && listsData.length) ? listsData[0].listId : null,
+                listName: (listsData && listsData.length) ? listsData[0].listName : null,
+                sharedWith: (listsData && listsData.length) ? listsData[0].sharedWith : null,
+                userId: (listsData && listsData.length) ? listsData[0].userId : null,
+                userEmail: (listsData && listsData.length) ? listsData[0].userEmail : null,
+                userName: (listsData && listsData.length) ? listsData[0].userName : null,
             });
         }
-    }, [listsData, listInfo.listId]);
-    const firstDifferentList = (list) => {
+    }, [listsData, listInfo.listId, props.user.uid, props.user.email, props.user.displayName]);
+    const firstDifferentList = (id) => {
         for (const list2 of listsData) {
-            if (list.listId !== list2.listId) {
+            if (id !== list2.listId) {
                 return {
                     listId: list2.listId,
                     listName: list2.listName,
+                    sharedWith: list2.sharedWith,
+                    userId: list2.userId,
+                    userEmail: list2.userEmail,
+                    userName: list2.userName,
                 };
             }
         }
@@ -135,6 +295,7 @@ function App() {
 
     const itemsQuery = query(collection(db, `${collectionName}/${listInfo.listId}/${subcollectionName}`), orderBy(sortField, sortOrder));
     const [itemsData, itemsLoading, itemsError] = useCollectionData(itemsQuery);
+
 
     // Allow user to undo recent add/edit/delete operations
     const [undoStack, setUndoStack] = useState([]);
@@ -163,6 +324,10 @@ function App() {
     const [showAddListModal, setShowAddListModal] = useState(false);
     const [showEditListModal, setShowEditListModal] = useState(false);
     const [showDeleteListModal, setShowDeleteListModal] = useState(false);
+    const [showShareModal, setShowShareModal] = useState(false);
+
+    // Hidden modal for signing out
+    const [showSignOutModal, setShowSignOutModal] = useState(false);
 
     // Add item
     const onAddItem = (text, priority) => {
@@ -171,8 +336,16 @@ function App() {
             op: UndoOp.Add,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData,
         });
 
@@ -193,8 +366,16 @@ function App() {
             op: UndoOp.Edit,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData
         });
 
@@ -212,8 +393,16 @@ function App() {
             op: UndoOp.Delete,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData
         });
 
@@ -227,8 +416,16 @@ function App() {
             op: UndoOp.Delete,
             oldListId: listInfo.listId,
             oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData
         });
 
@@ -252,90 +449,135 @@ function App() {
             op: UndoOp.Add,
             oldListId: null,
             oldListName: null,
+            oldSharedWith: null,
+            oldUserId: null,
+            oldUserEmail: null,
+            oldUserName: null,
             newListId: id,
             newList: name,
+            newSharedWith: [],
+            newUserId: props.user.uid,
+            newUserEmail: props.user.email,
+            newUserName: props.user.displayName,
             data: [],
         });
 
         setDoc(doc(db, collectionName, id), {
             listId: id,
             listName: name,
-            userId: userId,
+            userId: props.user.uid,
+            userEmail: props.user.email,
+            userName: props.user.displayName,
+            sharedWith: [],
         });
 
         // Update state to be on newly added list
         setListInfo({
             listName: name,
             listId: id,
+            sharedWith: [],
+            userId: props.user.uid,
+            userEmail: props.user.email,
+            userName: props.user.displayName,
         });
     }
 
     // Edit list name
-    const onEditList = (oldId, oldName, newName) => {
-        const id = generateUniqueID();
-
+    const onEditListName = (oldName, newName) => {
         pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Edit,
-            oldListId: oldId,
+            oldListId: listInfo.listId,
             oldListName: oldName,
-            newListId: id,
+            oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
+            newListId: listInfo.listId,
             newListName: newName,
+            newSharedWith: listInfo.sharedWith,
+            newUserId: listInfo.userId,
+            newUserEmail: listInfo.userEmail,
+            newUserName: listInfo.userName,
             data: itemsData,
         });
 
-        const batch = writeBatch(db);
-
-        // Delete old list
-        batch.delete(doc(db, collectionName, oldId));
-
-        // Add new list
-        batch.set(doc(db, collectionName, id), {
-            listId: id,
+        // Update list name
+        updateDoc(doc(db, collectionName, listInfo.listId), {
             listName: newName,
-            userId: userId,
-        });
-
-        // Add back all items under new list name
-        itemsData.forEach((item) => {
-            batch.set(doc(db, `${collectionName}/${id}/${subcollectionName}`, item.id), {
-               id: item.id,
-               text: item.text,
-               completed: item.completed,
-               priority: item.priority,
-               created: item.created,
-            });
-        });
-
-        batch.commit();
+         });
 
         // Update state to be on newly edited list
         setListInfo({
             listName: newName,
-            listId: id,
+            listId: listInfo.listId,
+            sharedWith: listInfo.sharedWith,
+            userId: listInfo.userId,
+            userEmail: listInfo.userEmail,
+            userName: listInfo.userName,
         });
     }
 
     // Delete list
-    const onDeleteList = (id, name) => {
+    const onDeleteList = (id, name, sharedWith, userId, userEmail, userName) => {
         pushUndoStack({
             type: UndoType.List,
             op: UndoOp.Delete,
             oldListId: id,
             oldListName: name,
+            oldSharedWith: sharedWith,
+            oldUserId: userId,
+            oldUserEmail: userEmail,
+            oldUserName: userName,
             newListId: null,
             newListName: null,
+            newSharedWith: null,
+            newUserId: null,
+            newUserEmail: null,
+            newUserName: null,
             data: itemsData,
         });
 
         deleteDoc(doc(db, collectionName, id));
 
         // Update state since current subcollection list no longer exists
-        const newListInfo = firstDifferentList({
-            listId: id,
-            listName: name,
-        })
-        setListInfo(newListInfo);
+        setListInfo(firstDifferentList(id));
+    }
+
+    // Add/delete email to/from sharedWith attribute of list
+    const onEditSharedEmails = (newSharedWith) => {
+        pushUndoStack({
+            type: UndoType.List,
+            op: UndoOp.Edit,
+            oldListId: listInfo.listId,
+            oldListName: listInfo.listName,
+            oldSharedWith: listInfo.sharedWith,
+            oldUserId: listInfo.userId,
+            oldUserEmail: listInfo.userEmail,
+            oldUserName: listInfo.userName,
+            newListId: listInfo.listId,
+            newListName: listInfo.listName,
+            newSharedWith: newSharedWith,
+            newUserId: listInfo.userId,
+            newUserEmail: listInfo.userEmail,
+            newUserName: listInfo.userName,
+            data: itemsData,
+        });
+
+        // Update list sharedWith
+        updateDoc(doc(db, collectionName, listInfo.listId), {
+            sharedWith: newSharedWith,
+         });
+
+        // Update state to be on newly edited list
+        setListInfo({
+            listName: listInfo.listName,
+            listId: listInfo.listId,
+            sharedWith: newSharedWith,
+            userId: listInfo.userId,
+            userEmail: listInfo.userEmail,
+            userName: listInfo.userName,
+        });
     }
 
     // Undo operation so data is brought to previous state
@@ -368,25 +610,28 @@ function App() {
                 setListInfo({
                     listId: undo.oldListId,
                     listName: undo.oldListName,
+                    sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
-            })
+            });
         } else { // Undo operation on a list
             if (undo.op === UndoOp.Add) {
                 // Delete list
                 batch.delete(doc(db, collectionName, undo.newListId));
 
                 // Update state since current subcollection list no longer exists
-                const newListInfo = firstDifferentList({
-                    listId: undo.newListId,
-                    listName: undo.newListName,
-                })
-                setListInfo(newListInfo);
+                setListInfo(firstDifferentList(undo.newListId));
             } else if (undo.op === UndoOp.Delete) {
                 // Add back list
                 batch.set(doc(db, collectionName, undo.oldListId), {
                     listId: undo.oldListId,
                     listName: undo.oldListName,
-                    userId: userId,
+                    sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
 
                 // Add back all items under new list name
@@ -403,38 +648,29 @@ function App() {
                 setListInfo({
                     listId: undo.oldListId,
                     listName: undo.oldListName,
+                    sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
             } else {
-                // Delete new list
-                batch.delete(doc(db, collectionName, undo.newListId));
-
-                // Add back old list
-                batch.set(doc(db, collectionName, undo.oldListId), {
-                    listId: undo.oldListId,
+                // Revert back to old list name
+                batch.update(doc(db, collectionName, undo.oldListId), {
                     listName: undo.oldListName,
-                    userId: userId,
-                });
-
-                // Add back all items under old list name
-                undo.data.forEach((item) => {
-                    batch.set(doc(db, `${collectionName}/${undo.oldListId}/${subcollectionName}`, item.id), {
-                        id: item.id,
-                        text: item.text,
-                        completed: item.completed,
-                        priority: item.priority,
-                        created: item.created,
-                    });
                 });
 
                 setListInfo({
                     listId: undo.oldListId,
                     listName: undo.oldListName,
+                    sharedWith: undo.oldSharedWith,
+                    userId: undo.oldUserId,
+                    userEmail: undo.oldUserEmail,
+                    userName: undo.oldUserName,
                 });
             }
 
             batch.commit();
         }
-
 
         // Update the undoStack
         setUndoStack(newStack);
@@ -442,28 +678,29 @@ function App() {
 
     return (
         <div className="App">
-            {(listsLoading || itemsLoading) && <div className="loading-spinner"></div>}
-            {(listsError || itemsError) && <h1 className="empty-placeholder">Error occurred while trying to fetch data. Please try again later.</h1>}
-            {!listsLoading && !itemsLoading && !listsError && !itemsError &&
+            {(listsLoading || sharedListsLoading || itemsLoading) && <div className="loading-spinner"></div>}
+            {listsError && <h1 className="empty-placeholder">"Error fetching data: " {listsError.message}</h1>}
+            {sharedListsError && <h1 className="empty-placeholder">"Error fetching data: " {sharedListsError.message}</h1>}
+            {itemsError && <h1 className="empty-placeholder">"Error fetching data: " {itemsError.message}</h1>}
+            {!listsLoading && !sharedListsLoading && !itemsLoading && !listsError && !sharedListsError && !itemsError &&
                 <>
                     {/* Top title bar with list changing buttons/dropdown */}
                     <div className="todo-text todo-title">
                         <div className="todo-list-dropdown-container">
                             <div className="todo-list-dropdown">
-                                <span class="todo-list-dropdown-label">To-Do:</span>
-                                <Dropdown
+                                <span className="todo-list-dropdown-label">To-Do:</span>
+                                <GroupedDropdown
                                     selectClass={"main-list-select-mui"}
-                                    dropdownWidth={200}
+                                    dropdownWidth={120}
                                     menuLabel=""
                                     onSelectItem={(val) => {
-                                        setListInfo({
-                                            listId: listNameToId(val),
-                                            listName: val,
-                                        });
+                                        setListInfo(listIdToListInfo(val));
                                     }}
-                                    menuState={listInfo.listName}
-                                    options={listsData.map(list => list.listName)}
+                                    menuState={listInfo.listId}
+                                    data1={listsData}
+                                    data2={sharedListsData}
                                     menuName="Lists"
+                                    emailOwner={listInfo.userEmail}
                                 />
                             </div>
                         </div>
@@ -483,7 +720,7 @@ function App() {
                                     <FaEdit />
                                 </IconContext.Provider>
                             </button>
-                            {listsData.length > 1 &&
+                            {listsData.length > 1 && props.user.uid === listInfo.userId &&
                                 <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-trash" aria-label={`delete list named ${listInfo.listName}`} onClick={() => {
                                     setShowDeleteListModal(true);
                                 }}>
@@ -492,6 +729,20 @@ function App() {
                                     </IconContext.Provider>
                                 </button>
                             }
+                            {props.user.uid === listInfo.userId &&
+                                <button className="todo-icon todo-list-dropdown-button" aria-label={`edit shared people that can edit list named ${listInfo.listName}`} onClick={() => {
+                                    setShowShareModal(true);
+                                }}>
+                                    <IconContext.Provider value={{ size: '27px' }}>
+                                        <FaShareSquare />
+                                    </IconContext.Provider>
+                                </button>
+                            }
+                            <button type="button" className="todo-icon todo-list-dropdown-button" aria-label="sign out" onClick={() => setShowSignOutModal(true)}>
+                                <IconContext.Provider value={{ size: '27px' }}>
+                                    <FaSignOutAlt />
+                                </IconContext.Provider>
+                            </button>
                         </div>
                     </div>
                     {/* Container for show and sort dropdowns */}
@@ -582,7 +833,7 @@ function App() {
                     {showAddListModal &&
                         <AddEditListModal
                             title="Add New List"
-                            name="New List Name"
+                            name="New List"
                             onCancel={() => {
                                 setShowAddListModal(false);
                             }}
@@ -600,7 +851,7 @@ function App() {
                                 setShowEditListModal(false);
                             }}
                             onConfirm={(name) => {
-                                onEditList(listInfo.listId, listInfo.listName, name);
+                                onEditListName(listInfo.listName, name);
                                 setShowEditListModal(false);
                             }}
                         />
@@ -613,8 +864,40 @@ function App() {
                                 setShowDeleteListModal(false);
                             }}
                             onConfirm={() => {
-                                onDeleteList(listInfo.listId, listInfo.listName);
+                                onDeleteList(listInfo.listId, listInfo.listName, listInfo.sharedWith, listInfo.userId, listInfo.userEmail, listInfo.userName);
                                 setShowDeleteListModal(false);
+                            }}
+                        />
+                    }
+                    {showShareModal &&
+                        <ShareModal
+                            title={`Share List "${listInfo.listName}"`}
+                            list={listInfo.listName}
+                            sharedWith={listInfo.sharedWith}
+                            onCancel={() => {
+                                setShowShareModal(false);
+                            }}
+                            onConfirm={(email) => {
+                                const newSharedWith = listInfo.sharedWith.concat([email]);
+                                onEditSharedEmails(newSharedWith);
+                                setShowShareModal(false);
+                            }}
+                            onDeleteItem={(email) => {
+                                const newSharedWith = listInfo.sharedWith.filter(e => e !== email);
+                                onEditSharedEmails(newSharedWith);
+                            }}
+                        />
+                    }
+                    {showSignOutModal &&
+                        <SignOutModal
+                            title={"Sign Out"}
+                            text={"Are you sure you want to sign out?"}
+                            onCancel={() => {
+                                setShowSignOutModal(false);
+                            }}
+                            onConfirm={() => {
+                                signOut(auth);
+                                setShowSignOutModal(false);
                             }}
                         />
                     }

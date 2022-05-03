@@ -1,0 +1,55 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+  	// Make sure user is signed in
+    function signedIn() {
+    	return request.auth.uid != null;
+    }
+
+    // Make sure user owns the list
+    function isDocOwner() {
+    	return request.auth.uid == resource.data.userId;
+    }
+
+    // Make sure user is shared with the list
+    function isSharedWithMe() {
+    	return request.auth.token.email in resource.data.sharedWith;
+    }
+
+    // Make sure the created document has the same userId as its creator
+    function createdDocHasCorrectOwner() {
+      return request.auth.uid == request.resource.data.userId;
+    }
+
+    // Make sure the updated document does not change owners
+    function updatedDocHasSameOwner() {
+      return resource.data.userId == request.resource.data.userId;
+    }
+
+    match /Lists/{list} {
+      allow read: if signedIn() && (isDocOwner() || isSharedWithMe());
+      allow create: if signedIn() && createdDocHasCorrectOwner();
+      allow update: if signedIn() && isDocOwner() && updatedDocHasSameOwner();
+      allow delete: if signedIn() && isDocOwner();
+    }
+
+    match /Lists/{list}/Items/{item} {
+      // Make sure user owns the list of the item
+      // Note the first condition is required since when we add a list, there is a bug where there is a permission error when trying to query its Items subcollection
+      // Apparently the rules engine has not fully processed the document and it does not actually exist yet
+      // This is probably because we are creating the list document and immediately trying to query its Items subcollection
+      // https://stackoverflow.com/questions/52673952/missing-or-insufficient-permissions-on-newly-created-documents-sub-collection has a similar issue and provides more context
+      function isParentDocOwner() {
+        return !exists(/databases/$(database)/documents/Lists/$(list)) || request.auth.uid == get(/databases/$(database)/documents/Lists/$(list)).data.userId;
+      }
+
+      // Make sure user is shared with the list of the item
+      function isParentSharedWithMe() {
+        return request.auth.token.email in get(/databases/$(database)/documents/Lists/$(list)).data.sharedWith;
+      }
+
+    	allow read, create, update, delete: if signedIn() && (isParentDocOwner() || isParentSharedWithMe());
+    }
+  }
+}

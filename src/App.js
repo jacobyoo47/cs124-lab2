@@ -26,6 +26,8 @@ import {
 import TabList from './TabList';
 import ShareModal from './ShareModal';
 import SignOutModal from './SignOutModal';
+import FormControl from '@mui/material/FormControl';
+import TextField from '@mui/material/TextField';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -128,37 +130,45 @@ function SignIn() {
     const [password, setPassword] = useState("");
 
     return (
-        <div className="App">
+        <div className="tab-signin">
             {(user1 || user2) && <div>Unexpectedly signed in already</div>}
             {(loading1 || loading2) && <div className="loading-spinner"></div>}
             {(!loading1 && !loading2) &&
-                <>
+                <div className="tab-elements">
                     {error1 && <h1>"Error logging in: " {error1.message}</h1>}
                     {error2 && <h1>"Error logging in: " {error2.message}</h1>}
-                    <label htmlFor="email">Email:</label>
-                    <input
-                        type="text"
-                        id="email"
-                        value={email}
-                        onChange={e => setEmail(e.target.value)}
-                    />
-                    <br/>
-                    <label htmlFor="password">Password: </label>
-                    <input
-                        type="text"
-                        id="password"
-                        value={password}
-                        onChange = {e =>setPassword(e.target.value)}
-                    />
-                    <br/>
-                    <button onClick={() =>signInWithEmailAndPassword(email, password)}>
-                        Sign in with Email/Password
-                    </button>
-                    <hr/>
-                    <button onClick={() => signInWithGoogle()}>
+
+                    <button className="tab-signin-with-google" onClick={() => signInWithGoogle()}>
                         Sign in with Google
                     </button>
-                </>
+                    <br/>
+                    <h3>OR</h3>
+
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Email" variant="standard" value={email} onChange={(event) => {
+                                setEmail(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    signInWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Password" variant="standard" value={password} onChange={(event) => {
+                                setPassword(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    signInWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+
+                    <button className="tab-signin-with-email" onClick={() =>signInWithEmailAndPassword(email, password)}>
+                        Sign in with Email/Password
+                    </button>
+                </div>
             }
         </div>
     );
@@ -170,26 +180,38 @@ function SignUp() {
     const [password, setPassword] = useState("");
 
     return (
-        <div className="App">
+        <div className="">
             {userCredential && <div>Unexpectedly signed in already</div>}
             {loading && <div className="loading-spinner"></div>}
             {(!loading) &&
-                <>
+                <div className="tab-elements tab-signup">
                     {error && <p>"Error signing up: " {error.message}</p>}
-                    <label htmlFor="email">Email</label>
-                    <input type="text" id="email" value={email}
-                        onChange={e => setEmail(e.target.value)}/>
-                    <br/>
-                    <label htmlFor="Password">Password:</label>
-                    <input type="text" id="Password" value={password}
-                        onChange={e => setPassword(e.target.value)}/>
-                    <br/>
-                    <button onClick={() => {
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Email" variant="standard" value={email} onChange={(event) => {
+                                setEmail(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    createUserWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+                    <FormControl variant="standard" sx={{ m: 1, width: "70vw", paddingBottom: 1 }}>
+                        <TextField autoFocus id="task-name-input" label="Password" variant="standard" value={password} onChange={(event) => {
+                                setPassword(event.target.value);
+                            }}
+                            onKeyDown={(event) => {
+                                if (event.key === "Enter") {
+                                    createUserWithEmailAndPassword(email, password);
+                                }
+                        }}/>
+                    </FormControl>
+                    <button className="tab-signin-with-email" onClick={() => {
                         createUserWithEmailAndPassword(email, password);
                     }}>
                         Create User
                     </button>
-                </>
+                </div>
             }
         </div>
     );

@@ -1,6 +1,6 @@
 import './App.css';
 import { useState, useEffect } from 'react';
-import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList, FaShareSquare } from 'react-icons/fa';
+import { FaPlus, FaPlusCircle, FaUndo, FaEdit, FaTrashAlt, FaClipboardList, FaShareSquare, FaSignOutAlt } from 'react-icons/fa';
 import { IconContext } from 'react-icons';
 import Dropdown from './Dropdown';
 import GroupedDropdown from './GroupedDropdown';
@@ -25,6 +25,7 @@ import {
 } from "firebase/auth";
 import TabList from './TabList';
 import ShareModal from './ShareModal';
+import SignOutModal from './SignOutModal';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -305,6 +306,9 @@ function SignedInApp(props) {
     const [showEditListModal, setShowEditListModal] = useState(false);
     const [showDeleteListModal, setShowDeleteListModal] = useState(false);
     const [showShareModal, setShowShareModal] = useState(false);
+
+    // Hidden modal for signing out
+    const [showSignOutModal, setShowSignOutModal] = useState(false);
 
     // Add item
     const onAddItem = (text, priority) => {
@@ -668,7 +672,7 @@ function SignedInApp(props) {
                                 <span className="todo-list-dropdown-label">To-Do:</span>
                                 <GroupedDropdown
                                     selectClass={"main-list-select-mui"}
-                                    dropdownWidth={200}
+                                    dropdownWidth={120}
                                     menuLabel=""
                                     onSelectItem={(val) => {
                                         setListInfo(listIdToListInfo(val));
@@ -679,7 +683,6 @@ function SignedInApp(props) {
                                     menuName="Lists"
                                 />
                             </div>
-                            <div className="owner-text">{`Owner: ${listInfo.userEmail}`}</div>
                         </div>
                         <div className="todo-list-dropdown-buttons-container">
                             <button className="todo-icon todo-list-dropdown-button todo-list-dropdown-add" aria-label="add list" onClick={() => {
@@ -715,7 +718,11 @@ function SignedInApp(props) {
                                     </IconContext.Provider>
                                 </button>
                             }
-                            <button type="button" onClick={() => signOut(auth)}>Sign Out</button>
+                            <button type="button" className="todo-icon todo-list-dropdown-button" aria-label="sign out" onClick={() => setShowSignOutModal(true)}>
+                                <IconContext.Provider value={{ size: '27px' }}>
+                                    <FaSignOutAlt />
+                                </IconContext.Provider>
+                            </button>
                         </div>
                     </div>
                     {/* Container for show and sort dropdowns */}
@@ -736,6 +743,7 @@ function SignedInApp(props) {
                             options={SortByArr}
                             menuName="Sort"
                         />
+                        <div className="owner-text">{`Owner: ${listInfo.userEmail}`}</div>
                     </div>
                     {/* Container for list items */}
                     <div className="todo-list">
@@ -858,6 +866,19 @@ function SignedInApp(props) {
                             onDeleteItem={(email) => {
                                 const newSharedWith = listInfo.sharedWith.filter(e => e !== email);
                                 onEditSharedEmails(newSharedWith);
+                            }}
+                        />
+                    }
+                    {showSignOutModal &&
+                        <SignOutModal
+                            title={"Sign Out"}
+                            text={"Are you sure you want to sign out?"}
+                            onCancel={() => {
+                                setShowSignOutModal(false);
+                            }}
+                            onConfirm={() => {
+                                signOut(auth);
+                                setShowSignOutModal(false);
                             }}
                         />
                     }

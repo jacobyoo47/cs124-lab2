@@ -26,6 +26,7 @@ import {
 import TabList from './TabList';
 import ShareModal from './ShareModal';
 import SignOutModal from './SignOutModal';
+import DisabledDropdown from './DisabledDropdown';
 
 const firebaseConfig = {
     apiKey: "AIzaSyDTdxmHJT6utYagkotNRpMLF-EmRhcSYWw",
@@ -681,6 +682,7 @@ function SignedInApp(props) {
                                     data1={listsData}
                                     data2={sharedListsData}
                                     menuName="Lists"
+                                    emailOwner={listInfo.userEmail}
                                 />
                             </div>
                         </div>
@@ -743,7 +745,15 @@ function SignedInApp(props) {
                             options={SortByArr}
                             menuName="Sort"
                         />
-                        <div className="owner-text">{`Owner: ${listInfo.userEmail}`}</div>
+                        {/* <div className="owner-text">
+                            Owner:
+                            <div>{listInfo.userEmail}</div>
+                        </div> */}
+                        {/* <DisabledDropdown
+                            menuLabel="List Owner:"
+                            menuName="ListOwner"
+                            menuState={0}
+                        /> */}
                     </div>
                     {/* Container for list items */}
                     <div className="todo-list">
@@ -814,7 +824,7 @@ function SignedInApp(props) {
                     {showAddListModal &&
                         <AddEditListModal
                             title="Add New List"
-                            name="New List Name"
+                            name="New List"
                             onCancel={() => {
                                 setShowAddListModal(false);
                             }}

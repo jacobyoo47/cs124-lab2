@@ -2,6 +2,7 @@ import Select from '@mui/material/Select';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import FormControl from '@mui/material/FormControl';
+import FormHelperText from '@mui/material/FormHelperText';
 import ListSubheader from '@mui/material/ListSubheader';
 
 const getKeyValueOptions = (data) => {
@@ -31,6 +32,7 @@ function GroupedDropdown(props) {
                     <ListSubheader>Shared Lists</ListSubheader>
                     {getKeyValueOptions(props.data2)}
                 </Select>
+                <FormHelperText>{props.emailOwner}</FormHelperText>
             </FormControl>
         </div>
     )
